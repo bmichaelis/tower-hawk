@@ -27,8 +27,8 @@ public class PhysicalMemoryCheck extends AbstractCheck {
 			double percentUsed = (1 - (freePhysicalMemory / totalPhysicalMemory)) * 100;
 			getThreshold().evaluate(builder, percentUsed);
 			builder.addContext("freePhysicalMemory", freePhysicalMemory)
-				.addContext("totalPhysicalMemory", totalPhysicalMemory)
-				.addContext("percentMemoryUsed", percentUsed);
+					.addContext("totalPhysicalMemory", totalPhysicalMemory)
+					.addContext("percentMemoryUsed", percentUsed);
 		} else {
 			builder.addContext("swapSpace", "Cannot get memory usage information from jvm");
 		}

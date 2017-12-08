@@ -2,11 +2,7 @@ package org.towerhawk.monitor.check.impl;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.Setter;
-import lombok.Synchronized;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.towerhawk.monitor.active.Active;
 import org.towerhawk.monitor.active.Enabled;
@@ -26,11 +22,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -274,10 +266,9 @@ public abstract class AbstractCheck implements Check {
 		}
 	}
 
-	protected Status extension(CheckRun.Builder builder, RunContext context) {
+	protected void extension(CheckRun.Builder builder, RunContext context) {
 		// checks can extend other checks to get information
 		// or objects through the context
-		return Status.SUCCEEDED;
 	}
 
 	@Override
@@ -301,10 +292,10 @@ public abstract class AbstractCheck implements Check {
 		if (obj instanceof Check) { //implicit null check
 			Check that = (Check) obj;
 			if (id != null
-				&& app != null
-				&& that.getApp() != null
-				&& id.equals(that.getId())
-				&& app.getId().equals(that.getApp().getId())) {
+					&& app != null
+					&& that.getApp() != null
+					&& id.equals(that.getId())
+					&& app.getId().equals(that.getApp().getId())) {
 				return true;
 			}
 		}
@@ -318,7 +309,7 @@ public abstract class AbstractCheck implements Check {
 
 	protected String transformInputStream(InputStream inputStream) {
 		return new BufferedReader(new InputStreamReader(inputStream))
-			.lines().collect(Collectors.joining(configuration.getLineDelimiter()));
+				.lines().collect(Collectors.joining(configuration.getLineDelimiter()));
 	}
 
 	/**

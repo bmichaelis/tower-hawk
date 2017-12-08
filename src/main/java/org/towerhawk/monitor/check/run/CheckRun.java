@@ -321,7 +321,7 @@ public interface CheckRun extends Comparable<CheckRun> {
 				message = null;
 			}
 			return new CheckRunImpl(status, error, message, context, duration, startTime, endTime
-				, failingSince, timedOut, check, previousCheckRun);
+					, failingSince, timedOut, check, previousCheckRun);
 		}
 	}
 }

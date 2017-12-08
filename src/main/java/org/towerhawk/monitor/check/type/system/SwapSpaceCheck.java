@@ -28,8 +28,8 @@ public class SwapSpaceCheck extends AbstractCheck {
 				double percentSwapUsed = ((double) freeSwapSpace / totalSwapSpace) * 100;
 				getThreshold().evaluate(builder, percentSwapUsed);
 				builder.addContext("freeSwapSpace", freeSwapSpace)
-					.addContext("totalSwapSpace", totalSwapSpace)
-					.addContext("percentSwapUsed", percentSwapUsed);
+						.addContext("totalSwapSpace", totalSwapSpace)
+						.addContext("percentSwapUsed", percentSwapUsed);
 			}
 		} else {
 			builder.message("Cannot get swap information from jvm");

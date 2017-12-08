@@ -25,10 +25,10 @@ public class ConcurrentCheckRunHandler implements Callable<CheckRun>, Comparable
 	private RunContext runContext;
 
 	public ConcurrentCheckRunHandler(
-		@NonNull Check check,
-		@NonNull ConcurrentCheckRunAccumulator accumulator,
-		@NonNull ConcurrentCheckInterruptor interruptor,
-		@NonNull RunContext runContext
+			@NonNull Check check,
+			@NonNull ConcurrentCheckRunAccumulator accumulator,
+			@NonNull ConcurrentCheckInterruptor interruptor,
+			@NonNull RunContext runContext
 	) {
 		this.check = check;
 		this.accumulator = accumulator;

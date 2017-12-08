@@ -18,11 +18,11 @@ public interface CheckRunAggregator {
 		}
 		if (filteredCheckRuns != null && !filteredCheckRuns.isEmpty()) {
 			builder.message(
-				filteredCheckRuns.stream()
-					.filter(r -> r.getMessage() != null && !r.getMessage().isEmpty())
-					.map(checkRun -> checkRun.getCheck().getId() + ": " + checkRun.getMessage())
-					//.collect(Collectors.toMap(r -> r.getCheck().getId(), r -> r.getMessage()))
-					.collect(Collectors.joining(delimiter)));
+					filteredCheckRuns.stream()
+							.filter(r -> r.getMessage() != null && !r.getMessage().isEmpty())
+							.map(checkRun -> checkRun.getCheck().getId() + ": " + checkRun.getMessage())
+							//.collect(Collectors.toMap(r -> r.getCheck().getId(), r -> r.getMessage()))
+							.collect(Collectors.joining(delimiter)));
 		}
 	}
 }

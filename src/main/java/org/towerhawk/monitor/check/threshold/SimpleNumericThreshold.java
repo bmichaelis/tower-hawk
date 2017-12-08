@@ -6,7 +6,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import org.towerhawk.monitor.check.run.CheckRun;
-import org.towerhawk.monitor.check.run.Status;
 import org.towerhawk.monitor.check.threshold.builder.SimpleNumericBuilder;
 import org.towerhawk.monitor.check.threshold.eval.NumericThresholdEvaluator;
 import org.towerhawk.serde.resolver.ThresholdType;
@@ -23,54 +22,54 @@ public class SimpleNumericThreshold implements Threshold {
 	private boolean setMessage = true;
 
 	public SimpleNumericThreshold(
-		NumericThresholdEvaluator warningThreshold,
-		NumericThresholdEvaluator criticalThreshold
+			NumericThresholdEvaluator warningThreshold,
+			NumericThresholdEvaluator criticalThreshold
 	) {
 		this(warningThreshold, criticalThreshold, false, false);
 	}
 
 	public SimpleNumericThreshold(
-		double warnLower,
-		double warnUpper,
-		double critLower,
-		double critUpper
+			double warnLower,
+			double warnUpper,
+			double critLower,
+			double critUpper
 	) {
 		this(warnLower, warnUpper, critLower, critUpper, false);
 	}
 
 	public SimpleNumericThreshold(
-		double warnLower,
-		double warnUpper,
-		double critLower,
-		double critUpper,
-		boolean between
+			double warnLower,
+			double warnUpper,
+			double critLower,
+			double critUpper,
+			boolean between
 	) {
 		this(new NumericThresholdEvaluator(warnLower, warnUpper, between, 0),
-			new NumericThresholdEvaluator(critLower, critUpper, between, 0),
-			true, true);
+				new NumericThresholdEvaluator(critLower, critUpper, between, 0),
+				true, true);
 	}
 
 	public SimpleNumericThreshold(
-		double warnLower,
-		double warnUpper,
-		double critLower,
-		double critUpper,
-		boolean between,
-		int precision,
-		boolean addContext,
-		boolean setMessage
+			double warnLower,
+			double warnUpper,
+			double critLower,
+			double critUpper,
+			boolean between,
+			int precision,
+			boolean addContext,
+			boolean setMessage
 	) {
 		this(new NumericThresholdEvaluator(warnLower, warnUpper, between, precision),
-			new NumericThresholdEvaluator(critLower, critUpper, between, precision),
-			addContext, setMessage);
+				new NumericThresholdEvaluator(critLower, critUpper, between, precision),
+				addContext, setMessage);
 	}
 
 	@JsonCreator
 	public SimpleNumericThreshold(
-		@JsonProperty("warning") NumericThresholdEvaluator warningThreshold,
-		@JsonProperty("critical") NumericThresholdEvaluator criticalThreshold,
-		@JsonProperty("addContext") boolean addContext,
-		@JsonProperty("setMessage") boolean setMessage
+			@JsonProperty("warning") NumericThresholdEvaluator warningThreshold,
+			@JsonProperty("critical") NumericThresholdEvaluator criticalThreshold,
+			@JsonProperty("addContext") boolean addContext,
+			@JsonProperty("setMessage") boolean setMessage
 	) {
 		this.warningThreshold = warningThreshold;
 		this.criticalThreshold = criticalThreshold;
@@ -78,8 +77,7 @@ public class SimpleNumericThreshold implements Threshold {
 		this.setMessage = setMessage;
 	}
 
-	@Override
-	public Status evaluate(CheckRun.Builder builder, double value) {
+	public void evaluate(CheckRun.Builder builder, double value) {
 		if (criticalThreshold.evaluate(value)) {
 			builder.critical();
 			if (isAddContext()) {
@@ -88,7 +86,6 @@ public class SimpleNumericThreshold implements Threshold {
 			if (isSetMessage()) {
 				builder.message(criticalThreshold.evaluateReason(value));
 			}
-			return Status.CRITICAL;
 		} else if (warningThreshold.evaluate(value)) {
 			builder.warning();
 			if (isAddContext()) {
@@ -97,36 +94,23 @@ public class SimpleNumericThreshold implements Threshold {
 			if (isSetMessage()) {
 				builder.message(warningThreshold.evaluateReason(value));
 			}
-			return Status.WARNING;
-		}
-		builder.succeeded();
-		return Status.SUCCEEDED;
-	}
-
-	@Override
-	public Status evaluate(CheckRun.Builder builder, String value) {
-		try {
-			double val = Double.valueOf(value);
-			return evaluate(builder, val);
-		} catch (Exception e) {
-			builder.critical().error(new IllegalArgumentException("Cannot coerce value of type " + value.getClass() + " to Number", e));
-			return Status.CRITICAL;
+		} else {
+			builder.succeeded();
 		}
 	}
 
 	@Override
-	public Status evaluate(CheckRun.Builder builder, Object value) {
+	public void evaluate(CheckRun.Builder builder, Object value) {
 		try {
 			if (value instanceof Number) {
 				double val = ((Number) value).doubleValue();
-				return evaluate(builder, val);
+				evaluate(builder, val);
 			} else {
-				return evaluate(builder, value.toString());
+				evaluate(builder, Double.valueOf(value.toString()));
 			}
 		} catch (Exception e) {
-			builder.critical().error(new IllegalArgumentException("Cannot coerce value of type " + value.getClass() + " to Number", e));
+			builder.critical().error(new IllegalArgumentException("Cannot coerce value '" + value.toString() + "' of type " + value.getClass() + " to Number", e));
 		}
-		return Status.CRITICAL;
 	}
 
 	public static SimpleNumericBuilder builder() {

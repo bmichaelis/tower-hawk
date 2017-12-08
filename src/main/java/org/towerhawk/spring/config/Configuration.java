@@ -12,11 +12,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
-import static org.towerhawk.monitor.check.run.CheckRunSelector.Field.context;
-import static org.towerhawk.monitor.check.run.CheckRunSelector.Field.duration;
-import static org.towerhawk.monitor.check.run.CheckRunSelector.Field.failingSince;
-import static org.towerhawk.monitor.check.run.CheckRunSelector.Field.message;
-import static org.towerhawk.monitor.check.run.CheckRunSelector.Field.status;
+import static org.towerhawk.monitor.check.run.CheckRunSelector.Field.*;
 
 @org.springframework.context.annotation.Configuration
 @ConfigurationProperties("towerhawk.monitor")
@@ -87,7 +83,7 @@ public class Configuration {
 		dateTimeFormatter = DateTimeFormatter.ofPattern(defaultDateFormat, locale);
 		if (checkRunDefaultFields == null || checkRunDefaultFields.isEmpty()) {
 			checkRunDefaultFields = Arrays.asList(status, message, context,
-				duration, failingSince);
+					duration, failingSince);
 		}
 		if (hardTimeoutMsLimit < 30000) {
 			hardTimeoutMsLimit = 30000;

@@ -51,7 +51,7 @@ public class HttpCheck extends AbstractCheck {
 	protected CloseableHttpClient configureHttpClient() {
 		HttpClientBuilder builder = HttpClients.custom();
 
-		if ( StringUtils.hasText(auth.getUsername()) ) {
+		if (StringUtils.hasText(auth.getUsername())) {
 			Credentials creds = new UsernamePasswordCredentials(auth.getUsername(), auth.getPassword());
 			CredentialsProvider provider = new BasicCredentialsProvider();
 			provider.setCredentials(AuthScope.ANY, creds);
@@ -71,18 +71,18 @@ public class HttpCheck extends AbstractCheck {
 
 	@Override
 	protected void doRun(CheckRun.Builder builder, RunContext context) throws InterruptedException {
-		try (ClientHttpResponse response = getClientHttpRequest().execute(); ){
+		try (ClientHttpResponse response = getClientHttpRequest().execute();) {
 			Threshold t = getThreshold();
 			String asString = IOUtils.toString(response.getBody(), StandardCharsets.UTF_8);
 			if (includeResponseInResult) {
 				builder.addContext("httpResponse", asString);
 			}
 			Object processed = processResponse(asString);
-			Status status = t.evaluate(builder, processed);
-			if ( status == Status.SUCCEEDED ) {
+			t.evaluate(builder, processed);
+			if (builder.getStatus() == Status.SUCCEEDED) {
 				builder.succeeded().addContext("connection", String.format("Connection to %s successful", endpoint));
 			}
-		} catch ( IOException e ) {
+		} catch (IOException e) {
 			throw new IllegalStateException(e);
 		}
 	}
@@ -96,7 +96,7 @@ public class HttpCheck extends AbstractCheck {
 
 	@Override
 	public void init(Check check, Configuration configuration, App app, String id) {
-		if ( !StringUtils.hasText(endpoint) ) {
+		if (!StringUtils.hasText(endpoint)) {
 			endpoint = new StringBuilder("http://").append(configuration.getDefaultHost()).toString();
 		}
 
@@ -104,7 +104,7 @@ public class HttpCheck extends AbstractCheck {
 		requestFactory = new HttpComponentsClientHttpRequestFactory(client) {
 			@Override
 			protected void postProcessHttpRequest(HttpUriRequest request) {
-				if ( request instanceof HttpEntityEnclosingRequest) {
+				if (request instanceof HttpEntityEnclosingRequest) {
 					((HttpEntityEnclosingRequest) request).setEntity(new ByteArrayEntity(body.getBytes(StandardCharsets.UTF_8)));
 				}
 			}

@@ -6,11 +6,7 @@ import org.towerhawk.spring.config.Configuration;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Getter
 public class CheckRunSelector implements CheckRun {

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Getter;
 import lombok.Setter;
 import org.towerhawk.monitor.check.run.CheckRun;
-import org.towerhawk.monitor.check.run.Status;
 import org.towerhawk.serde.resolver.ThresholdType;
 
 @Getter
@@ -19,14 +18,8 @@ public class SimpleRegexThreshold implements Threshold {
 	private boolean setMessage;
 
 	@Override
-	public Status evaluate(CheckRun.Builder builder, double value) {
-		builder.critical();
-		throw new UnsupportedOperationException("Cannot evaluate a number (" + String.valueOf(value) + ") against a string check");
-	}
-
-	@Override
-	public Status evaluate(CheckRun.Builder builder, String value) {
-		boolean matches = value.matches(regex);
+	public void evaluate(CheckRun.Builder builder, Object value) {
+		boolean matches = value.toString().matches(regex);
 		if (matches) {
 			builder.succeeded();
 			if (setMessage) {
@@ -44,14 +37,8 @@ public class SimpleRegexThreshold implements Threshold {
 		}
 		if (addContext) {
 			builder.addContext("regex", regex)
-				.addContext("value", value)
-				.addContext("matches", matches);
+					.addContext("value", value)
+					.addContext("matches", matches);
 		}
-		return builder.getStatus();
-	}
-
-	@Override
-	public Status evaluate(CheckRun.Builder builder, Object value) {
-		return evaluate(builder, value.toString());
 	}
 }

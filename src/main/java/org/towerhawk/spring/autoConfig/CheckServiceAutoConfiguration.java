@@ -30,7 +30,7 @@ public class CheckServiceAutoConfiguration {
 	private ThreadPoolExecutorFactoryBean getThreadPoolExecutorFactoryBean(ConcurrentCheckRunConfiguration config, String threadGroupName, String threadNamePrefix) {
 		ThreadPoolExecutorFactoryBean t = new ThreadPoolExecutorFactoryBean();
 		t.setCorePoolSize(config.getCorePoolSize());
-		t.setMaxPoolSize(config.getMaxPoolSize());
+		t.setMaxPoolSize(Math.max(config.getMaxPoolSize(), config.getCorePoolSize()));
 		t.setQueueCapacity(config.getQueueCapacity());
 		t.setKeepAliveSeconds(config.getKeepAliveSeconds());
 		t.setAllowCoreThreadTimeOut(config.isAllowCoreTimeout());
@@ -42,24 +42,24 @@ public class CheckServiceAutoConfiguration {
 
 	@Bean
 	public ConcurrentCheckRunner checkCheckRunner(
-		ConcurrentCheckInterruptor interruptor,
-		ExecutorService checkRunService
+			ConcurrentCheckInterruptor interruptor,
+			ExecutorService checkRunService
 	) {
 		return new ConcurrentCheckRunner(interruptor, checkRunService);
 	}
 
 	@Bean
 	public ConcurrentCheckRunner appCheckRunner(
-		ConcurrentCheckInterruptor interruptor,
-		ExecutorService appRunService
+			ConcurrentCheckInterruptor interruptor,
+			ExecutorService appRunService
 	) {
 		return new ConcurrentCheckRunner(interruptor, appRunService);
 	}
 
 	@Bean
 	public ConcurrentCheckRunner monitorCheckRunner(
-		ConcurrentCheckInterruptor interruptor,
-		ExecutorService monitorRunService
+			ConcurrentCheckInterruptor interruptor,
+			ExecutorService monitorRunService
 	) {
 		return new ConcurrentCheckRunner(interruptor, monitorRunService);
 	}

@@ -47,16 +47,16 @@ apps:
           - ps
         recentChecks:
           sizeLimit: 20
-      heapSize:
-        type: javaheap
-        port: 12181
-        threshold:
-          type: nagios
-          warning: 80
-          critical: 90
-          addContext: true
-          setMessage: true
-          precision: 0
+#      heapSize:
+#        type: javaheap
+#        port: 12181
+#        threshold:
+#          type: nagios
+#          warning: 80
+#          critical: 90
+#          addContext: true
+#          setMessage: true
+#          precision: 0
   kafka:
     alias: messaging
     cacheMs: 10000

@@ -20,8 +20,8 @@ public class DailySchedule implements Active {
 
 	@JsonCreator
 	public DailySchedule(@JsonProperty("startTime") String startTime
-		, @JsonProperty("endTime") String endTime
-		, @JsonProperty("timeFormat") String timeFormat) {
+			, @JsonProperty("endTime") String endTime
+			, @JsonProperty("timeFormat") String timeFormat) {
 		if (timeFormat == null || timeFormat.isEmpty()) {
 			timeFormat = "HH:mm";
 		}

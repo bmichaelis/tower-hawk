@@ -36,14 +36,14 @@ public class CheckFilter {
 
 	public boolean filter(@NonNull Check check) {
 		return priority(check)
-			&& priorityLte(check)
-			&& priorityGte(check)
-			&& tags(check)
-			&& notTags(check)
-			&& type(check)
-			&& notType(check)
-			&& id(check)
-			&& notId(check);
+				&& priorityLte(check)
+				&& priorityGte(check)
+				&& tags(check)
+				&& notTags(check)
+				&& type(check)
+				&& notType(check)
+				&& id(check)
+				&& notId(check);
 	}
 
 	private boolean priority(Check check) {

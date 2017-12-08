@@ -17,17 +17,17 @@ public class NagiosSyntaxThreshold extends SimpleNumericThreshold {
 
 	@JsonCreator
 	public NagiosSyntaxThreshold(@JsonProperty("warning") String warning
-		, @JsonProperty("critical") String critical
-		, @JsonProperty("addContext") boolean addContext
-		, @JsonProperty("setMessage") boolean setMessage
-		, @JsonProperty("precision") int precision) {
+			, @JsonProperty("critical") String critical
+			, @JsonProperty("addContext") boolean addContext
+			, @JsonProperty("setMessage") boolean setMessage
+			, @JsonProperty("precision") int precision) {
 		super(adaptToThresholdEvaluator(warning, precision), adaptToThresholdEvaluator(critical, precision), addContext, setMessage);
 	}
 
 	/**
 	 * As referenced from the nagios documentation at:
 	 * https://nagios-plugins.org/doc/guidelines.html#THRESHOLDFORMAT
-	 *
+	 * <p>
 	 * "10"	      < 0 or > 10, (outside the range of {0 .. 10})
 	 * "10:"	    < 10, (outside {10 .. ∞})
 	 * "~:10"	    > 10, (outside the range of {-∞ .. 10})

@@ -57,8 +57,8 @@ public class PortCheck extends AbstractCheck {
 				InetAddress address = InetAddress.getByName(localHost);
 				socket = new Socket(host, port, address, localPort);
 			}
-			Status status = getThreshold().evaluate(builder, java.lang.System.currentTimeMillis() - start);
-			if (status == Status.SUCCEEDED) {
+			getThreshold().evaluate(builder, java.lang.System.currentTimeMillis() - start);
+			if (builder.getStatus() == Status.SUCCEEDED) {
 				//Only check output if the port is open and responding in time
 				builder.succeeded().addContext("connection", String.format("Connection to %s:%d successful", host, port));
 				runContext.putContext(SOCKET, socket);

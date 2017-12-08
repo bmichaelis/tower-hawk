@@ -18,7 +18,7 @@ public class ElasticsearchTaskCheck extends HttpCheck {
 		try {
 			JsonNode root = mapper.readTree(response);
 			JsonNode nodes = root.get("nodes");
-			int[] count = new int[] { 0 };
+			int[] count = new int[]{0};
 			nodes.fields().forEachRemaining(node -> {
 				JsonNode tasks = node.getValue().get("tasks");
 				tasks.fields().forEachRemaining(task -> count[0]++);

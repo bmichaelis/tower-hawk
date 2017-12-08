@@ -34,7 +34,7 @@ public class LoadAverageCheck extends AbstractCheck {
 		}
 		getThreshold().evaluate(builder, loadAverageCalc);
 		builder.addContext("loadAverage", loadAverage)
-			.addContext("availableProcessors", availableProcs)
-			.addContext("useLoadRatio", loadRatio);
+				.addContext("availableProcessors", availableProcs)
+				.addContext("useLoadRatio", loadRatio);
 	}
 }

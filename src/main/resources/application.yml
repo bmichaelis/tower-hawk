@@ -5,9 +5,9 @@ towerhawk:
   monitor:
     checkDefinitionDir: config/
   checkRunnerThreadPool:
-    corePoolSize: 1
-    maxPoolSize: 1
+    corePoolSize: 10
+    maxPoolSize: 10
   appRunnerThreadPool:
-    corePoolSize: 1
-    maxPoolSize: 1
+    corePoolSize: 10
+    maxPoolSize: 10
 

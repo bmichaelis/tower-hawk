@@ -38,7 +38,7 @@ public abstract class AbstractTypeResolver extends TypeIdResolverBase {
 			return;
 		}
 		ClassPathScanningCandidateComponentProvider scanner =
-			new ClassPathScanningCandidateComponentProvider(false);
+				new ClassPathScanningCandidateComponentProvider(false);
 
 		scanner.addIncludeFilter(new AnnotationTypeFilter(getAnnotationType()));
 

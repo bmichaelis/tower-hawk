@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.towerhawk.monitor.check.run.CheckRun;
-import org.towerhawk.monitor.check.run.Status;
 import org.towerhawk.monitor.check.run.context.RunContext;
 import org.towerhawk.monitor.check.threshold.SimpleRegexThreshold;
 import org.towerhawk.serde.resolver.CheckType;
@@ -23,7 +22,7 @@ public class PortResponseCheck extends PortCheck {
 	private SimpleRegexThreshold response;
 
 	@Override
-	protected Status extension(CheckRun.Builder builder, RunContext context) {
+	protected void extension(CheckRun.Builder builder, RunContext context) {
 		try {
 			if (send == null || send.isEmpty()) {
 				throw new IllegalStateException("send and expectRegex must not be empty or null");
@@ -34,11 +33,10 @@ public class PortResponseCheck extends PortCheck {
 			os.write(send.getBytes(outputCharset));
 			os.flush();
 			String result = transformInputStream(socket.getInputStream());
-			return response.evaluate(builder, result);
+			response.evaluate(builder, result);
 		} catch (Exception e) {
 			builder.critical().error(new RuntimeException("Exception caught when trying to send or read from socket", e));
 			log.warn("Exception caught on check {} when trying to send or read from socket", getFullName(), e);
-			return builder.getStatus();
 		}
 	}
 }

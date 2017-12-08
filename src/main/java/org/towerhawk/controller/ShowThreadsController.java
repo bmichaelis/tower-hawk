@@ -30,12 +30,12 @@ public class ShowThreadsController {
 
 	@RequestMapping(value = "/showThreads")
 	public ResponseEntity showAllThreads(
-		@RequestParam(defaultValue = "id") List<SortPriority> priority,
-		@RequestParam(defaultValue = "false") boolean desc,
-		@RequestParam(required = false) List<Thread.State> state,
-		@RequestParam(required = false) List<String> name,
-		@RequestParam(required = false) List<String> nameIC,
-		@RequestParam(required = false) List<Long> id
+			@RequestParam(defaultValue = "id") List<SortPriority> priority,
+			@RequestParam(defaultValue = "false") boolean desc,
+			@RequestParam(required = false) List<Thread.State> state,
+			@RequestParam(required = false) List<String> name,
+			@RequestParam(required = false) List<String> nameIC,
+			@RequestParam(required = false) List<Long> id
 	) {
 		//always sort by id as a last resort
 		// if it's already added it won't get evalutated twice

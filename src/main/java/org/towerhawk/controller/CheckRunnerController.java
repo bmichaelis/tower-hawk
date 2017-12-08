@@ -2,11 +2,7 @@ package org.towerhawk.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.towerhawk.monitor.app.App;
 import org.towerhawk.monitor.check.Check;
 import org.towerhawk.monitor.check.filter.CheckFilter;
@@ -37,11 +33,11 @@ public class CheckRunnerController {
 
 	@Inject
 	public CheckRunnerController(
-		ControllerMonitorServiceWrapper monitorServiceWrapper,
-		Configuration configuration,
-		ConcurrentCheckRunner checkCheckRunner,
-		ConcurrentCheckRunner appCheckRunner,
-		ConcurrentCheckRunner monitorCheckRunner
+			ControllerMonitorServiceWrapper monitorServiceWrapper,
+			Configuration configuration,
+			ConcurrentCheckRunner checkCheckRunner,
+			ConcurrentCheckRunner appCheckRunner,
+			ConcurrentCheckRunner monitorCheckRunner
 	) {
 		this.monitorServiceWrapper = monitorServiceWrapper;
 		this.configuration = configuration;
@@ -53,17 +49,17 @@ public class CheckRunnerController {
 
 	@RequestMapping(path = "/app", method = {RequestMethod.POST, RequestMethod.GET})
 	public ResponseEntity<CheckRun> runApps(
-		@RequestParam(required = false) List<Integer> priority,
-		@RequestParam(required = false) Integer priorityLte,
-		@RequestParam(required = false) Integer priorityGte,
-		@RequestParam(required = false) List<String> tags,
-		@RequestParam(required = false) List<String> notTags,
-		@RequestParam(required = false) List<String> type,
-		@RequestParam(required = false) List<String> notType,
-		@RequestParam(required = false) List<String> id,
-		@RequestParam(required = false) List<String> notId,
-		@RequestParam(required = false) List<CheckRunSelector.Field> fields,
-		HttpServletRequest request
+			@RequestParam(required = false) List<Integer> priority,
+			@RequestParam(required = false) Integer priorityLte,
+			@RequestParam(required = false) Integer priorityGte,
+			@RequestParam(required = false) List<String> tags,
+			@RequestParam(required = false) List<String> notTags,
+			@RequestParam(required = false) List<String> type,
+			@RequestParam(required = false) List<String> notType,
+			@RequestParam(required = false) List<String> id,
+			@RequestParam(required = false) List<String> notId,
+			@RequestParam(required = false) List<CheckRunSelector.Field> fields,
+			HttpServletRequest request
 	) {
 		CheckFilter checkFilter = new CheckFilter(priority, priorityLte, priorityGte, tags, notTags, type, notType, id, notId);
 		DefaultRunContext checkContext = monitorServiceWrapper.getContext(request);
@@ -74,9 +70,9 @@ public class CheckRunnerController {
 
 	@RequestMapping(path = "/app/{appId}", method = {RequestMethod.POST, RequestMethod.GET})
 	public ResponseEntity<CheckRun> runApp(
-		@PathVariable String appId,
-		@RequestParam(required = false) List<CheckRunSelector.Field> fields,
-		HttpServletRequest request
+			@PathVariable String appId,
+			@RequestParam(required = false) List<CheckRunSelector.Field> fields,
+			HttpServletRequest request
 	) {
 		App app = monitorServiceWrapper.getApp(appId);
 		DefaultRunContext checkContext = monitorServiceWrapper.getContext(request);
@@ -86,10 +82,10 @@ public class CheckRunnerController {
 
 	@RequestMapping(path = "/app/{appId}/{checkId}", method = {RequestMethod.POST, RequestMethod.GET})
 	public ResponseEntity<CheckRun> runCheck(
-		@PathVariable String appId,
-		@PathVariable String checkId,
-		@RequestParam(required = false) List<CheckRunSelector.Field> fields,
-		HttpServletRequest request
+			@PathVariable String appId,
+			@PathVariable String checkId,
+			@RequestParam(required = false) List<CheckRunSelector.Field> fields,
+			HttpServletRequest request
 	) {
 		Check check = monitorServiceWrapper.getCheck(appId, checkId);
 		DefaultRunContext checkContext = monitorServiceWrapper.getContext(request);
@@ -97,28 +93,28 @@ public class CheckRunnerController {
 		return getCheckRunResponseEntity(checkRun, fields);
 	}
 
-	@RequestMapping(path = "/check", method = {RequestMethod.POST, RequestMethod.GET})
+	@RequestMapping(path = {"/", "/check"}, method = {RequestMethod.POST, RequestMethod.GET})
 	public ResponseEntity<CheckRun> runChecks(
-		@RequestParam(required = false) List<Integer> priority,
-		@RequestParam(required = false) Integer priorityLte,
-		@RequestParam(required = false) Integer priorityGte,
-		@RequestParam(required = false) List<String> tags,
-		@RequestParam(required = false) List<String> notTags,
-		@RequestParam(required = false) List<String> type,
-		@RequestParam(required = false) List<String> notType,
-		@RequestParam(required = false) List<String> id,
-		@RequestParam(required = false) List<String> notId,
-		@RequestParam(required = false) List<Integer> appPriority,
-		@RequestParam(required = false) Integer appPriorityLte,
-		@RequestParam(required = false) Integer appPriorityGte,
-		@RequestParam(required = false) List<String> appTags,
-		@RequestParam(required = false) List<String> appNotTags,
-		@RequestParam(required = false) List<String> appType,
-		@RequestParam(required = false) List<String> appNotType,
-		@RequestParam(required = false) List<String> appId,
-		@RequestParam(required = false) List<String> appNotId,
-		@RequestParam(required = false) List<CheckRunSelector.Field> fields,
-		HttpServletRequest request
+			@RequestParam(required = false) List<Integer> priority,
+			@RequestParam(required = false) Integer priorityLte,
+			@RequestParam(required = false) Integer priorityGte,
+			@RequestParam(required = false) List<String> tags,
+			@RequestParam(required = false) List<String> notTags,
+			@RequestParam(required = false) List<String> type,
+			@RequestParam(required = false) List<String> notType,
+			@RequestParam(required = false) List<String> id,
+			@RequestParam(required = false) List<String> notId,
+			@RequestParam(required = false) List<Integer> appPriority,
+			@RequestParam(required = false) Integer appPriorityLte,
+			@RequestParam(required = false) Integer appPriorityGte,
+			@RequestParam(required = false) List<String> appTags,
+			@RequestParam(required = false) List<String> appNotTags,
+			@RequestParam(required = false) List<String> appType,
+			@RequestParam(required = false) List<String> appNotType,
+			@RequestParam(required = false) List<String> appId,
+			@RequestParam(required = false) List<String> appNotId,
+			@RequestParam(required = false) List<CheckRunSelector.Field> fields,
+			HttpServletRequest request
 	) {
 		CheckFilter checkFilter = new CheckFilter(priority, priorityLte, priorityGte, tags, notTags, type, notType, id, notId);
 		CheckFilter appFilter = new CheckFilter(appPriority, appPriorityLte, appPriorityGte, appTags, appNotTags, appType, appNotType, appId, appNotId);

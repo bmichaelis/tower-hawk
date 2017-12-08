@@ -126,7 +126,7 @@ public class JmxCheck extends AbstractCheck {
 			resolveBaseMbeanPath(configuration);
 			serviceUrl = new JMXServiceURL(connectionString);
 			refreshConnection();
-		} catch ( Exception e ) {
+		} catch (Exception e) {
 			log.warn("Could not connect to JMX at startup--this check will fail until the service is available");
 		}
 	}

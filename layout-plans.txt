@@ -5,6 +5,7 @@ Some alerts should have commands that can be run to fix any issues that may be h
 
 
 TODO:
+  Separate Abstract Check from others and need for checks to be aware of transforms or thresholds
   Create classes to use for serialization so different implementations don't need to care
   Write more check classes
   Finish api endpoints

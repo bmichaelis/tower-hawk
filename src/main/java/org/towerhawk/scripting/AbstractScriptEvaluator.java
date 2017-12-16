@@ -40,7 +40,9 @@ public abstract class AbstractScriptEvaluator {
 	}
 
 	public void setFile(String file) {
-		this.file = new File(file);
+		if (file != null && !file.isEmpty()) {
+			this.file = new File(file);
+		}
 	}
 
 	public abstract Object invoke(Object... args) throws Exception;

@@ -61,7 +61,7 @@ public class App extends AbstractCheck {
 	}
 
 	@Override
-	protected void doRun(CheckRun.Builder builder, RunContext runContext) {
+	protected void doRun(CheckRun.Builder builder, RunContext runContext) throws Exception {
 		Object mapPredicate = runContext.getContext().get(predicateKey());
 		Collection<Check> checksToRun;
 		if (mapPredicate instanceof CheckFilter) {

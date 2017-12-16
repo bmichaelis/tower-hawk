@@ -15,6 +15,7 @@ import java.util.Map;
 @Slf4j
 public class CheckRefresher {
 	private String definitionsDir;
+	private ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
 	public static boolean validFile(File file) {
 		return file.toString().endsWith(".yaml") || file.toString().endsWith(".yml");
@@ -25,7 +26,6 @@ public class CheckRefresher {
 	}
 
 	public CheckDeserializer readDefinitions() {
-		ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 		File definitionsDir = Paths.get(this.definitionsDir).toFile();
 		List<CheckDeserializer> checkDeserializers = new ArrayList<>();
 		for (File file : definitionsDir.listFiles()) {

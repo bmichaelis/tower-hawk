@@ -2,24 +2,35 @@ package org.towerhawk.monitor.check.threshold;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Builder;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.towerhawk.monitor.check.run.CheckRun;
 import org.towerhawk.monitor.check.threshold.builder.SimpleNumericBuilder;
 import org.towerhawk.monitor.check.threshold.eval.NumericThresholdEvaluator;
+import org.towerhawk.monitor.check.transform.DoubleTransform;
 import org.towerhawk.serde.resolver.ThresholdType;
 
 @Getter
 @Setter
-@Builder
 @ThresholdType("numeric")
 public class SimpleNumericThreshold implements Threshold {
 
 	private NumericThresholdEvaluator warningThreshold;
 	private NumericThresholdEvaluator criticalThreshold;
+	@Setter(AccessLevel.NONE)
 	private boolean addContext = true;
+	@Setter(AccessLevel.NONE)
 	private boolean setMessage = true;
+	private DoubleTransform doubleTransform = new DoubleTransform();
+
+	public boolean isSetMessage() {
+		return setMessage;
+	}
+
+	public boolean isAddContext() {
+		return addContext;
+	}
 
 	public SimpleNumericThreshold(
 			NumericThresholdEvaluator warningThreshold,
@@ -77,39 +88,31 @@ public class SimpleNumericThreshold implements Threshold {
 		this.setMessage = setMessage;
 	}
 
-	public void evaluate(CheckRun.Builder builder, double value) {
-		if (criticalThreshold.evaluate(value)) {
-			builder.critical();
-			if (isAddContext()) {
-				builder.addContext("criticalThreshold", criticalThreshold.evaluateReason(value));
-			}
-			if (isSetMessage()) {
-				builder.message(criticalThreshold.evaluateReason(value));
-			}
-		} else if (warningThreshold.evaluate(value)) {
-			builder.warning();
-			if (isAddContext()) {
-				builder.addContext("warningThreshold", warningThreshold.evaluateReason(value));
-			}
-			if (isSetMessage()) {
-				builder.message(warningThreshold.evaluateReason(value));
-			}
-		} else {
-			builder.succeeded();
-		}
-	}
-
 	@Override
-	public void evaluate(CheckRun.Builder builder, Object value) {
+	public void evaluate(CheckRun.Builder builder, Object val) throws Exception {
 		try {
-			if (value instanceof Number) {
-				double val = ((Number) value).doubleValue();
-				evaluate(builder, val);
+			double value = (double) doubleTransform.transform(val);
+			if (criticalThreshold.evaluate(value)) {
+				builder.critical();
+				if (isAddContext()) {
+					builder.addContext("criticalThreshold", criticalThreshold.evaluateReason(value));
+				}
+				if (isSetMessage()) {
+					builder.message(criticalThreshold.evaluateReason(value));
+				}
+			} else if (warningThreshold.evaluate(value)) {
+				builder.warning();
+				if (isAddContext()) {
+					builder.addContext("warningThreshold", warningThreshold.evaluateReason(value));
+				}
+				if (isSetMessage()) {
+					builder.message(warningThreshold.evaluateReason(value));
+				}
 			} else {
-				evaluate(builder, Double.valueOf(value.toString()));
+				builder.succeeded();
 			}
 		} catch (Exception e) {
-			builder.critical().error(new IllegalArgumentException("Cannot coerce value '" + value.toString() + "' of type " + value.getClass() + " to Number", e));
+			builder.critical().error(new IllegalArgumentException("Cannot coerce value '" + val.toString() + "' of type " + val.getClass() + " to Number", e));
 		}
 	}
 

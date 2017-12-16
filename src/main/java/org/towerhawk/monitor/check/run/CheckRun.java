@@ -301,6 +301,10 @@ public interface CheckRun extends Comparable<CheckRun> {
 			return this;
 		}
 
+		public Check getCheck() {
+			return check;
+		}
+
 		public CheckRun build() {
 			if (checkRun == null) {
 				checkRun = actuallyBuild();

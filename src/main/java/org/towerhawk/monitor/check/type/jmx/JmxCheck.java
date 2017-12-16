@@ -1,4 +1,4 @@
-package org.towerhawk.monitor.check.type;
+package org.towerhawk.monitor.check.type.jmx;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -61,7 +61,7 @@ public class JmxCheck extends AbstractCheck {
 	private Class resultClass = Long.class;
 
 	@Override
-	protected void doRun(CheckRun.Builder builder, RunContext runContext) throws InterruptedException {
+	protected void doRun(CheckRun.Builder builder, RunContext runContext) throws Exception {
 		try {
 			maybeRefreshConnection();
 			// now query to get the beans or whatever

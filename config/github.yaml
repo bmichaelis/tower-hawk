@@ -1,0 +1,28 @@
+apps:
+  github:
+    alias: github.com
+    cacheMs: 5000
+    defaultCacheMs: 10000
+    timeoutMs: 10000
+    defaultTimeoutMs: 10000
+    priority: 0
+    tags:
+      - http
+      - git
+    checks:
+      commits:
+        timeoutMs: 2000
+        type: http
+        method: GET
+        endpoint: https://api.github.com/repos/tower-hawk/tower-hawk/commits?per_page=5
+        headers:
+          X-Custom: towerhawk check
+        transforms:
+          - type: jq
+            query: 'length'
+        threshold:
+          type: nagios
+          warning: 3:
+          critical: 5:
+          addContext: true
+          setMessage: true

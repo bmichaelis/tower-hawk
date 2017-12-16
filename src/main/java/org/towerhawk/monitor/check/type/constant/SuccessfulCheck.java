@@ -9,7 +9,7 @@ import org.towerhawk.serde.resolver.CheckType;
 public class SuccessfulCheck extends AbstractCheck {
 
 	@Override
-	protected void doRun(CheckRun.Builder builder, RunContext runContext) throws InterruptedException {
+	protected void doRun(CheckRun.Builder builder, RunContext runContext) throws Exception {
 		builder.succeeded().message("Always successful");
 	}
 }

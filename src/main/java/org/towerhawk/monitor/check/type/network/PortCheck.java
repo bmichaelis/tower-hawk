@@ -1,4 +1,4 @@
-package org.towerhawk.monitor.check.type;
+package org.towerhawk.monitor.check.type.network;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -45,7 +45,7 @@ public class PortCheck extends AbstractCheck {
 	}
 
 	@Override
-	protected void doRun(CheckRun.Builder builder, RunContext runContext) throws InterruptedException {
+	protected void doRun(CheckRun.Builder builder, RunContext runContext) throws Exception {
 		Socket socket = null;
 		long start = java.lang.System.currentTimeMillis();
 		try {

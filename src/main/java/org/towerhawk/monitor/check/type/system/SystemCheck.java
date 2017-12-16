@@ -1,4 +1,4 @@
-package org.towerhawk.monitor.check.type;
+package org.towerhawk.monitor.check.type.system;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -12,9 +12,6 @@ import org.towerhawk.monitor.check.run.CheckRunner;
 import org.towerhawk.monitor.check.run.DefaultCheckRunAggregator;
 import org.towerhawk.monitor.check.run.context.RunContext;
 import org.towerhawk.monitor.check.run.ordered.SynchronousCheckRunner;
-import org.towerhawk.monitor.check.type.system.LoadAverageCheck;
-import org.towerhawk.monitor.check.type.system.PhysicalMemoryCheck;
-import org.towerhawk.monitor.check.type.system.SwapSpaceCheck;
 import org.towerhawk.serde.resolver.CheckType;
 import org.towerhawk.spring.config.Configuration;
 
@@ -44,7 +41,7 @@ public class SystemCheck extends AbstractCheck {
 	}
 
 	@Override
-	protected void doRun(CheckRun.Builder builder, RunContext runContext) throws InterruptedException {
+	protected void doRun(CheckRun.Builder builder, RunContext runContext) throws Exception {
 		List<CheckRun> checkRuns = checkRunner.runChecks(checks.values(), runContext.duplicate());
 		aggregator.aggregate(builder, checkRuns, "OK", getConfiguration().getLineDelimiter());
 		checkRuns.stream().forEachOrdered(c -> {

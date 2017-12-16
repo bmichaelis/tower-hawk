@@ -24,7 +24,7 @@ public class LoadAverageCheck extends AbstractCheck {
 	}
 
 	@Override
-	protected void doRun(CheckRun.Builder builder, RunContext runContext) throws InterruptedException {
+	protected void doRun(CheckRun.Builder builder, RunContext runContext) throws Exception {
 		builder.succeeded();
 		java.lang.management.OperatingSystemMXBean os = ManagementFactory.getOperatingSystemMXBean();
 		double loadAverage = os.getSystemLoadAverage();

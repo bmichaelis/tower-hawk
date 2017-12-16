@@ -62,7 +62,11 @@ public class NagiosSyntaxThresholdTest {
 	private void evaluateMultiple(Threshold threshold, Map<Integer, Status> expected) {
 		expected.forEach((k, v) -> {
 			builder.forceSucceeded();
-			threshold.evaluate(builder, k.doubleValue());
+			try {
+				threshold.evaluate(builder, k.doubleValue());
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 			assertTrue(String.format("Expected value of %s but got %s for value %d", v, builder.getStatus(), k), v == builder.getStatus());
 		});
 		expected.clear();

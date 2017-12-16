@@ -1,5 +1,8 @@
-package org.towerhawk.monitor.check.type;
+package org.towerhawk.monitor.check.type.script;
 
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.towerhawk.monitor.app.App;
@@ -14,10 +17,12 @@ import java.io.File;
 import java.nio.file.Paths;
 import java.util.Map;
 
+@Slf4j
+@Setter
+@Getter
 @CheckType("shell")
 public class ShellCheck extends AbstractCheck {
 
-	private final Logger log = LoggerFactory.getLogger(this.getClass());
 	private String cmd = null;
 	private String[] cmdList = null;
 	private Map<String, String> env = null;
@@ -26,7 +31,7 @@ public class ShellCheck extends AbstractCheck {
 	private File dir;
 
 	@Override
-	protected void doRun(CheckRun.Builder builder, RunContext runContext) {
+	protected void doRun(CheckRun.Builder builder, RunContext runContext) throws Exception {
 		Process process = null;
 		try {
 			log.info("Running shell check with cmdList = {}", (Object) cmdList);
@@ -62,7 +67,6 @@ public class ShellCheck extends AbstractCheck {
 				}
 			}
 		}
-
 	}
 
 	@Override
@@ -80,45 +84,4 @@ public class ShellCheck extends AbstractCheck {
 			cmdList[cmdList.length - 1] = cmd;
 		}
 	}
-
-	public String getCmd() {
-		return cmd;
-	}
-
-	private void setCmd(String cmd) {
-		this.cmd = cmd;
-	}
-
-	private Map<String, String> getEnv() {
-		return env;
-	}
-
-	private void setEnv(Map<String, String> env) {
-		this.env = env;
-	}
-
-	private String[] getCmdList() {
-		return cmdList;
-	}
-
-	private void setCmdList(String[] cmdList) {
-		this.cmdList = cmdList;
-	}
-
-	private String getWorkDir() {
-		return workDir;
-	}
-
-	private void setWorkDir(String workDir) {
-		this.workDir = workDir;
-	}
-
-	private File getDir() {
-		return dir;
-	}
-
-	private void setDir(File dir) {
-		this.dir = dir;
-	}
-
 }

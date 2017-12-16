@@ -11,7 +11,9 @@ import org.towerhawk.monitor.check.Check;
 import org.towerhawk.monitor.check.run.CheckRun;
 import org.towerhawk.monitor.check.run.Status;
 import org.towerhawk.monitor.check.run.context.RunContext;
+import org.towerhawk.monitor.check.threshold.LoggerThreshold;
 import org.towerhawk.monitor.check.threshold.Threshold;
+import org.towerhawk.monitor.check.transform.Transform;
 import org.towerhawk.spring.config.Configuration;
 
 import java.io.BufferedReader;
@@ -58,14 +60,14 @@ public abstract class AbstractCheck implements Check {
 	private RecentCheckRun recentCheckRuns = new RecentCheckRun();
 	private boolean running = false;
 	@Setter
-	@Getter(AccessLevel.PROTECTED)
 	private boolean unknownIsCritical = true;
 	@Setter
 	@JsonIgnore
 	private Configuration configuration;
 	private boolean initialized = false;
 	@Setter
-	private Threshold threshold;
+	private Threshold threshold = new LoggerThreshold();
+	private List<Transform> transforms = Collections.emptyList();
 
 	@Override
 	public long getTimeoutMs() {
@@ -101,6 +103,10 @@ public abstract class AbstractCheck implements Check {
 	@Override
 	public final boolean isCached() {
 		return cachedFor() > 0;
+	}
+
+	public void setTransforms(List<Transform> transforms) {
+		this.transforms = Collections.unmodifiableList(transforms);
 	}
 
 	protected final long cachedFor() {
@@ -146,6 +152,18 @@ public abstract class AbstractCheck implements Check {
 		ZonedDateTime failingTime = failingSince.plus(getAllowedFailureDuration());
 		if (failingTime.compareTo(ZonedDateTime.now()) > 0) {
 			builder.forceSucceeded().addContext("suppressedFailureUntil", failingTime);
+		}
+	}
+
+	protected Object applyTransforms(Object value) {
+		try {
+			for (Transform transform : transforms) {
+				value = transform.transform(value);
+			}
+			return value;
+		} catch (Exception e) {
+			log.error("Unable to apply transforms for {} due to exception", getFullName(), e);
+			throw new RuntimeException(e);
 		}
 	}
 
@@ -320,6 +338,6 @@ public abstract class AbstractCheck implements Check {
 	 *
 	 * @param builder
 	 */
-	protected abstract void doRun(CheckRun.Builder builder, RunContext context) throws InterruptedException;
+	protected abstract void doRun(CheckRun.Builder builder, RunContext context) throws Exception;
 
 }

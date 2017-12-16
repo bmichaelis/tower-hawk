@@ -18,7 +18,7 @@ public class PhysicalMemoryCheck extends AbstractCheck {
 	}
 
 	@Override
-	protected void doRun(CheckRun.Builder builder, RunContext runContext) throws InterruptedException {
+	protected void doRun(CheckRun.Builder builder, RunContext runContext) throws Exception {
 		builder.succeeded();
 		if (ManagementFactory.getOperatingSystemMXBean() instanceof OperatingSystemMXBean) {
 			OperatingSystemMXBean os = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();

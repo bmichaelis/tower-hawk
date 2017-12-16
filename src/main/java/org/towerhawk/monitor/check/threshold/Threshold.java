@@ -21,5 +21,5 @@ public interface Threshold {
 
 	boolean isSetMessage();
 
-	void evaluate(CheckRun.Builder builder, Object value);
+	void evaluate(CheckRun.Builder builder, Object value) throws Exception;
 }

@@ -44,7 +44,7 @@ public class RegexThreshold implements Threshold {
 	}
 
 	@Override
-	public void evaluate(CheckRun.Builder builder, Object val) {
+	public void evaluate(CheckRun.Builder builder, Object val) throws Exception {
 		String value = val.toString();
 		if (criticalRegex != null && criticalRegex.matcher(value).find()) {
 			addContextAndMessage(builder, "criticalThreshold", value);
@@ -52,7 +52,7 @@ public class RegexThreshold implements Threshold {
 		} else if (warningRegex != null && warningRegex.matcher(value).find()) {
 			addContextAndMessage(builder, "warningThreshold", value);
 			builder.warning();
-		} else if (successRegex != null && successRegex.matcher(value).find()) {
+		} else if (successRegex == null || successRegex.matcher(value).find()) {
 			builder.succeeded();
 		} else {
 			builder.unknown();

@@ -16,7 +16,6 @@ import org.towerhawk.spring.config.Configuration;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.io.IOException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -38,6 +37,7 @@ public class MonitorService extends App {
 	public MonitorService(Configuration configuration,
 												AsynchronousCheckRunner checkCheckRunner,
 												AsynchronousCheckRunner appCheckRunner) {
+		super();
 		setConfiguration(configuration);
 		setCheckRunner(appCheckRunner);
 		this.checkCheckRunner = checkCheckRunner;
@@ -47,7 +47,12 @@ public class MonitorService extends App {
 
 	@PostConstruct
 	public void postConstruct() {
-		init(null, getConfiguration(), this, "monitorService");
+		try {
+			super.init(null, this, getConfiguration());
+			init(null, getConfiguration(), this, "monitorService");
+		} catch (Exception e) {
+			log.error("Unable initialize MonitorService due to exception", e);
+		}
 
 		boolean refreshed = refreshDefinitions();
 		if (!refreshed && getConfiguration().isShutdownOnInitializationFailure()) {
@@ -82,7 +87,7 @@ public class MonitorService extends App {
 	}
 
 	@Override
-	public void init(Check check, Configuration configuration, App app, String id) {
+	public void init(Check check, Configuration configuration, App app, String id) throws Exception {
 		setActive(new Enabled());
 		setTimeoutMs(configuration.getHardTimeoutMsLimit());
 		setCacheMs(0L);
@@ -110,7 +115,11 @@ public class MonitorService extends App {
 		checkDeserializer.getApps().forEach((id, app) -> {
 			app.setCheckRunner(checkCheckRunner);
 			Check previousApp = getChecks().get(app.getId());
-			app.init(previousApp, getConfiguration(), this, id);
+			try {
+				app.init(previousApp, getConfiguration(), this, id);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 			if (previousApp != null) {
 				appsToClose.add(previousApp);
 			}
@@ -119,7 +128,7 @@ public class MonitorService extends App {
 		appsToClose.forEach(previousApp -> {
 			try {
 				previousApp.close();
-			} catch (IOException e) {
+			} catch (Exception e) {
 				log.error("App {} failed to close with exception", previousApp.getFullName(), e);
 			}
 		});

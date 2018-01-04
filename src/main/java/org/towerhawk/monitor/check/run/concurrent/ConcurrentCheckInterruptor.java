@@ -2,6 +2,7 @@ package org.towerhawk.monitor.check.run.concurrent;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.towerhawk.monitor.check.logging.CheckMDC;
 import org.towerhawk.monitor.check.run.CheckRun;
 import org.towerhawk.spring.config.ConcurrentCheckInterruptorConfiguration;
 
@@ -33,7 +34,7 @@ public class ConcurrentCheckInterruptor implements Runnable, AutoCloseable {
 	}
 
 	private void submit(ConcurrentCheckRunHandler handler, boolean shouldInterrupt) {
-		log.debug("Adding handler for {}", handler.getCheck().getFullName());
+		log.debug("Adding handler for check");
 		boolean success = this.checkRunHandlerQueue.add(handler);
 		if (success && shouldInterrupt) {
 			interrupt();
@@ -45,7 +46,7 @@ public class ConcurrentCheckInterruptor implements Runnable, AutoCloseable {
 	}
 
 	public boolean remove(ConcurrentCheckRunHandler handler) {
-		log.debug("Removing handler for {}", handler.getCheck().getFullName());
+		log.debug("Removing handler for check");
 		return this.checkRunHandlerQueue.remove(handler);
 	}
 
@@ -63,14 +64,15 @@ public class ConcurrentCheckInterruptor implements Runnable, AutoCloseable {
 				handler = checkRunHandlerQueue.poll(configuration.getPollMs(), TimeUnit.MILLISECONDS);
 
 				if (handler != null) {
+					CheckMDC.put(handler.getCheck());
 					future = handler.getCheckRunFuture();
 					if (future != null && !future.isDone()) {
 						long timeout = handler.getTimeUntilTimeout();
 						if (timeout > 0) {
-							log.debug("Waiting for {} to run for {} ms", handler.getCheck().getFullName(), timeout);
+							log.debug("Waiting for check to run for {} ms", timeout);
 							future.get(timeout, TimeUnit.MILLISECONDS);
 						} else {
-							log.warn("Cancelling {} without waiting", handler.getCheck().getFullName());
+							log.warn("Cancelling check without waiting");
 							future.cancel(true);
 						}
 					}
@@ -84,21 +86,21 @@ public class ConcurrentCheckInterruptor implements Runnable, AutoCloseable {
 					submit(handler, false);
 				}
 			} catch (ExecutionException e) {
-				log.warn("Check {} completed exceptionally", handler.getCheck().getFullName(), e);
+				log.warn("Check completed exceptionally", e);
 				// Do nothing since execution has finished
 			} catch (TimeoutException e) {
 				//future shouldn't be null since this can only happen when trying to wait for it to finish
-				log.info("Cancelling {} after waiting and getting a TimeoutException", handler.getCheck().getFullName());
+				log.info("Cancelling after waiting and getting a TimeoutException");
 				future.cancel(true);
 			} catch (CancellationException e) {
-				log.warn("Check {} was cancelled while waiting on it", handler.getCheck().getFullName());
+				log.warn("Check was cancelled while waiting on it");
 			} catch (Throwable t) {
-				String id = null;
 				if (handler != null) {
-					id = handler.getCheck().getFullName();
+				  handler.cancel();
 				}
-				log.error("Caught unexpected exception for check {}", id, t);
-				handler.cancel();
+				log.error("Caught unexpected exception for check", t);
+			} finally {
+				CheckMDC.remove();
 			}
 		}
 	}

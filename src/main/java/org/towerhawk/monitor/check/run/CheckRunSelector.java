@@ -28,6 +28,7 @@ public class CheckRunSelector implements CheckRun {
 		check,
 		previousCheckRun,
 		recursiveCheckRun,
+		results,
 		_all
 	}
 
@@ -46,6 +47,7 @@ public class CheckRunSelector implements CheckRun {
 	private Byte priority = null;
 	private Check check = null;
 	private CheckRun previousCheckRun = null;
+	private Map<String, Object> results = null;
 
 	public CheckRunSelector(CheckRun checkRun, Collection<Field> fields, Configuration configuration) {
 		if (fields == null) {
@@ -122,6 +124,9 @@ public class CheckRunSelector implements CheckRun {
 				newSet.remove(Field.previousCheckRun);
 				previousCheckRun = new CheckRunSelector(previousCheckRun, newSet, configuration);
 			}
+		}
+		if (fields.contains(Field.results)) {
+			results = checkRun.getResults();
 		}
 	}
 

@@ -3,7 +3,9 @@ package org.towerhawk.monitor.check.run.concurrent;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.towerhawk.monitor.check.Check;
+import org.towerhawk.monitor.check.logging.CheckMDC;
 import org.towerhawk.monitor.check.run.CheckRun;
 import org.towerhawk.monitor.check.run.context.RunContext;
 
@@ -37,18 +39,22 @@ public class ConcurrentCheckRunHandler implements Callable<CheckRun>, Comparable
 	}
 
 	public void setCheckRunFuture(Future<CheckRun> checkRunFuture) {
+		CheckMDC.put(check);
 		if (checkRunFuture != null) {
-			log.debug("Setting future for {}", check.getFullName());
+			log.debug("Setting future for check");
 			this.checkRunFuture = checkRunFuture;
 			latch.countDown();
 		}
+		CheckMDC.remove();
 	}
 
 	public Future<CheckRun> getCheckRunFuture() throws InterruptedException {
+		CheckMDC.put(check);
 		if (checkRunFuture == null) {
-			log.debug("Waiting on future for {}", check.getFullName());
+			log.debug("Waiting on future for check");
 			latch.await();
 		}
+		CheckMDC.remove();
 		return this.checkRunFuture;
 	}
 
@@ -57,36 +63,40 @@ public class ConcurrentCheckRunHandler implements Callable<CheckRun>, Comparable
 	}
 
 	public void cancel() {
-		log.warn("Cancelling check {}", check.getFullName());
+		CheckMDC.put(check);
+		log.warn("Cancelling check");
 		try {
 			getCheckRunFuture().cancel(true);
 		} catch (InterruptedException e) {
-			log.warn("Got interrupted waiting for future of check {} to return", check.getFullName());
+			log.warn("Got interrupted waiting for future of check to return");
 		}
+		CheckMDC.remove();
 	}
 
 	@Override
 	public CheckRun call() throws Exception {
+		CheckMDC.put(check);
 		timeoutEpoch = System.currentTimeMillis() + check.getTimeoutMs();
 		checkRun = null;
 		try {
-			log.debug("Submitting handler for check {} to interruptor", check.getFullName());
+			log.debug("Submitting handler for check to interruptor");
 			interruptor.submit(this);
-			log.debug("Running check {}", check.getFullName());
+			log.debug("Running check");
 			checkRun = check.run(runContext);
 		} catch (Exception e) {
-			log.error("Check {} completed exceptionally", check.getFullName(), e);
+			log.warn("Check completed exceptionally", e);
 		} finally {
-			log.debug("Accumulating CheckRun for {}", check.getFullName());
+			log.debug("Accumulating CheckRun for check");
 			//TODO figure out how to make this less hackish
 			if (checkRun == null) {
 				//Call getLastCheckRun since that should always be set inside of run()
 				checkRun = check.getLastCheckRun();
 			}
 			accumulator.accumulate(checkRun);
-			log.debug("Removing handler for check {} from interruptor", check.getFullName());
+			log.debug("Removing handler from interruptor");
 			interruptor.remove(this);
 		}
+		CheckMDC.remove();
 		return checkRun;
 	}
 

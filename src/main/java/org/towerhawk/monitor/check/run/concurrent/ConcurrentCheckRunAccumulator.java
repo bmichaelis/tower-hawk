@@ -2,6 +2,7 @@ package org.towerhawk.monitor.check.run.concurrent;
 
 import lombok.extern.slf4j.Slf4j;
 import org.towerhawk.monitor.check.Check;
+import org.towerhawk.monitor.check.logging.CheckMDC;
 import org.towerhawk.monitor.check.run.CheckRun;
 import org.towerhawk.monitor.check.run.CheckRunAccumulator;
 
@@ -21,16 +22,18 @@ public class ConcurrentCheckRunAccumulator implements CheckRunAccumulator {
 	private Collection<ConcurrentCheckRunHandler> handlers = new ConcurrentLinkedQueue<>();
 
 	public void accumulate(CheckRun checkRun) {
-		log.debug("Accumulating CheckRun for {}", checkRun.getCheck().getFullName());
+		CheckMDC.put(checkRun.getCheck());
+		log.debug("Accumulating CheckRun");
 		// Can throw a null-pointer exception that is difficult to track down
 		// since the main thread can end up waiting on this forever.
 		try {
 			checkRuns.add(checkRun);
 			checkSet.remove(checkRun.getCheck());
 		} catch (Exception e) {
-			log.error("Unable to accumulate check {}", checkRun.getCheck().getFullName());
+			log.error("Unable to accumulate check");
 		} finally {
 			latch.countDown();
+			CheckMDC.remove();
 		}
 	}
 
@@ -38,7 +41,7 @@ public class ConcurrentCheckRunAccumulator implements CheckRunAccumulator {
 		try {
 			checkSet.remove(check);
 		} catch (Exception e) {
-			log.error("Unable to remove check {} from accumulator", check.getFullName(), e);
+			log.error("Unable to remove check from accumulator", e);
 		} finally {
 			latch.countDown();
 		}

@@ -1,6 +1,7 @@
 package org.towerhawk.monitor.check.run;
 
 import org.towerhawk.monitor.check.Check;
+import org.towerhawk.monitor.check.execution.ExecutionResult;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -77,6 +78,12 @@ public interface CheckRun extends Comparable<CheckRun> {
 	CheckRun getPreviousCheckRun();
 
 	/**
+	 *
+	 * @return The results of the ExecutionResult of this check run.
+	 */
+	Map<String, Object> getResults();
+
+	/**
 	 * This allows a CheckRun to remove some state so that a memory leak is not created by
 	 * holding on to all CheckRun instances since jvm startup
 	 */
@@ -135,7 +142,7 @@ public interface CheckRun extends Comparable<CheckRun> {
 
 	class Builder {
 
-		private Status status = null; //Status.SUCCEEDED;
+		private Status status = Status.SUCCEEDED;
 		private boolean unknownIsCritical = true;
 		private Throwable error = null;
 		private String message = null;
@@ -149,6 +156,7 @@ public interface CheckRun extends Comparable<CheckRun> {
 		private CheckRun previousCheckRun;
 		private CheckRun checkRun;
 		private long startNanos = System.nanoTime();
+		private Map<String, Object> results;
 
 		Builder(Check check, CheckRun checkRun) {
 			this.check = check;
@@ -167,6 +175,7 @@ public interface CheckRun extends Comparable<CheckRun> {
 			this.timedOut = source.isTimedOut();
 			this.check = source.getCheck();
 			this.previousCheckRun = source;
+			this.results = source.getResults();
 		}
 
 		public Status getStatus() {
@@ -301,6 +310,11 @@ public interface CheckRun extends Comparable<CheckRun> {
 			return this;
 		}
 
+		public Builder result(ExecutionResult result) {
+			this.results = result.getResults();
+			return this;
+		}
+
 		public Check getCheck() {
 			return check;
 		}
@@ -325,7 +339,7 @@ public interface CheckRun extends Comparable<CheckRun> {
 				message = null;
 			}
 			return new CheckRunImpl(status, error, message, context, duration, startTime, endTime
-					, failingSince, timedOut, check, previousCheckRun);
+					, failingSince, timedOut, check, previousCheckRun, results);
 		}
 	}
 }

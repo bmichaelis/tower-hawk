@@ -4,13 +4,13 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.annotation.JsonTypeIdResolver;
 import org.towerhawk.monitor.app.App;
+import org.towerhawk.monitor.check.execution.CheckExecutor;
 import org.towerhawk.monitor.check.run.CheckRun;
 import org.towerhawk.monitor.check.run.Status;
 import org.towerhawk.monitor.check.run.context.RunContext;
 import org.towerhawk.serde.resolver.CheckTypeResolver;
 import org.towerhawk.spring.config.Configuration;
 
-import java.io.Closeable;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Collection;
@@ -18,9 +18,9 @@ import java.util.List;
 import java.util.Set;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonTypeInfo(use = JsonTypeInfo.Id.CUSTOM, include = JsonTypeInfo.As.PROPERTY, property = "type", visible = true)
+@JsonTypeInfo(use = JsonTypeInfo.Id.CUSTOM, include = JsonTypeInfo.As.PROPERTY, property = "type", visible = true, defaultImpl = DefaultCheck.class)
 @JsonTypeIdResolver(CheckTypeResolver.class)
-public interface Check extends Comparable<Check>, Closeable {
+public interface Check extends Comparable<Check>, AutoCloseable {
 
 	/**
 	 * The id for this check. This should match the dictionary key in the configuration yaml.
@@ -75,6 +75,17 @@ public interface Check extends Comparable<Check>, Closeable {
 	long getTimeoutMs();
 
 	/**
+	 * Returns how many milliseconds this check has to finish running. Useful when using
+	 * other libraries that have timeouts so they can timeout before the check does to do
+	 * better error handling.
+	 *
+	 * @param throwException Whether or not to throw an IllegalStateException indicating that
+	 *                       this Check has timed out.
+	 * @return the number of milliseconds remaining before timeout
+	 */
+	public long getMsRemaining(boolean throwException);
+
+	/**
 	 * If the most recent CheckRun is in a failed state, this should tell when this check
 	 * entered a failed state. It should keep a consistent time until the check successfully
 	 * completes.
@@ -127,6 +138,12 @@ public interface Check extends Comparable<Check>, Closeable {
 	 * @return The type defined in the configuration yaml.
 	 */
 	String getType();
+
+	/**
+	 * This allows an execution to be called directly or to be handed to a new check.
+	 * @return The execution that this check is using
+	 */
+	CheckExecutor getExecutor();
 
 	/**
 	 * All checks belong to an App.
@@ -210,7 +227,7 @@ public interface Check extends Comparable<Check>, Closeable {
 	 * @param app           The app that this check belongs to
 	 * @param id            The name of this check used in returning values and in logging
 	 */
-	void init(Check check, Configuration configuration, App app, String id);
+	void init(Check check, Configuration configuration, App app, String id) throws Exception;
 
 	/**
 	 * Checks can be compared to one another. Checks with a higher getPriority() are
@@ -223,8 +240,8 @@ public interface Check extends Comparable<Check>, Closeable {
 		// Sort by priority
 		int compare = -Integer.compare(getPriority(), check.getPriority());
 		if (compare == 0) {
-			// Then by timeout so that shortest timeouts get submitted first
-			compare = Long.compare(getTimeoutMs(), check.getTimeoutMs());
+			// Then by timeout so that longest timeouts get submitted first
+			compare = -Long.compare(getTimeoutMs(), check.getTimeoutMs());
 		}
 		return compare;
 	}

@@ -1,5 +1,6 @@
 package org.towerhawk.monitor.reader;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -33,9 +34,15 @@ public class CheckRefresher {
 				try {
 					log.info("Refreshing file {}", file);
 					checkDeserializers.add(mapper.readValue(file, CheckDeserializer.class));
-				} catch (Exception e) {
-					log.error("Failed to deserialize yaml file {}", file.toPath().toString(), e);
-					throw new RuntimeException("Unable to read yaml files from " + file.toPath().toString() + " directory", e);
+				} catch (JsonMappingException e) {
+					if (e.getMessage().startsWith("No content to map")) {
+						log.warn("Excluding file {} because no input is available due to exception {}", file.toString(), e.getMessage());
+					} else {
+						throw new IllegalArgumentException("Unable to deserialize yaml file " + file.toString() + " to object structure", e);
+					}
+				}	catch (Exception e) {
+					log.error("Failed to deserialize yaml file {}", file.toString(), e);
+					throw new IllegalArgumentException("Failed to deserialize yaml file " + file.toString(), e);
 				}
 			}
 		}

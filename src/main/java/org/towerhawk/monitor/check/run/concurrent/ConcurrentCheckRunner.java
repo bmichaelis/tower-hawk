@@ -1,9 +1,11 @@
 package org.towerhawk.monitor.check.run.concurrent;
 
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.towerhawk.monitor.check.Check;
+import org.towerhawk.monitor.check.logging.CheckMDC;
 import org.towerhawk.monitor.check.run.CheckRun;
 import org.towerhawk.monitor.check.run.context.RunContext;
 
@@ -15,9 +17,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
+@Slf4j
 public class ConcurrentCheckRunner implements AsynchronousCheckRunner {
-
-	private Logger log = LoggerFactory.getLogger(getClass());
 
 	@Getter
 	private final ExecutorService checkRunService;
@@ -37,13 +38,18 @@ public class ConcurrentCheckRunner implements AsynchronousCheckRunner {
 		log.debug("Building handlers");
 		Collection<ConcurrentCheckRunHandler> handlers = checkList.stream().map(c -> new ConcurrentCheckRunHandler(c, accumulator, interruptor, runContext)).collect(Collectors.toList());
 		handlers.forEach(h -> {
-			if (h.getCheck().canRun()) {
-				log.debug("Submitting handler for {}", h.getCheck().getFullName());
-				Future<CheckRun> handlerFuture = checkRunService.submit(h);
-				h.setCheckRunFuture(handlerFuture);
-				accumulator.addHandler(h);
-			} else { //Shortcut calling the shouldRun method just to get a cached result
-				accumulator.accumulate(h.getCheck().getLastCheckRun());
+			try {
+				CheckMDC.put(h.getCheck());
+				if (h.getCheck().canRun()) {
+					log.debug("Submitting handler for {}", h.getCheck().getFullName());
+					Future<CheckRun> handlerFuture = checkRunService.submit(h);
+					h.setCheckRunFuture(handlerFuture);
+					accumulator.addHandler(h);
+				} else { //Shortcut calling the shouldRun method just to get a cached result
+					accumulator.accumulate(h.getCheck().getLastCheckRun());
+				}
+			} finally {
+				CheckMDC.remove();
 			}
 		});
 		log.debug("Returning accumulator");

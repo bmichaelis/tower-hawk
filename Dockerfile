@@ -1,20 +1,11 @@
-FROM anapsix/alpine-java:8_server-jre_unlimited
+FROM towerhawk/alpine-java-onbuild:8-1.1.0
 
-ENV APP_HOME=/app/towerhawk UID=507 GID=507 GROUP=towerhawk USER=towerhawk
+ARG JAR=*.jar
 
-VOLUME /tmp
-
-ADD target/towerhawk-0.0.1-SNAPSHOT.jar $APP_HOME/app.jar
-ADD entrypoint.sh $APP_HOME/
-
-RUN addgroup -g $GID $GROUP \
-  && adduser -u $UID -h $APP_HOME -s /bin/sh -D -H -G $GROUP $USER \
-  && chown -R $USER:$GROUP /app $APP_HOME
+ADD target/$JAR $APP_HOME/
 
 EXPOSE 4295
 
+ENV
+
 USER $USER:$GROUP
-
-WORKDIR $APP_HOME
-
-ENTRYPOINT [ "/bin/bash", "entrypoint.sh" ]

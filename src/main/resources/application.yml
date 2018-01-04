@@ -8,6 +8,6 @@ towerhawk:
     corePoolSize: 10
     maxPoolSize: 10
   appRunnerThreadPool:
-    corePoolSize: 10
-    maxPoolSize: 10
+    corePoolSize: 3
+    maxPoolSize: 3
 

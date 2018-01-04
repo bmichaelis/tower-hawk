@@ -1,58 +1,81 @@
 apps:
-  druid:
-    alias: apache-druid
-    cacheMs: 1000
-    defaultCacheMs: 1000
-    timeoutMs: 500000
-    defaultTimeoutMs: 100000
-    priority: 0
-    tags:
-      - http
-      - java
-      - test
+  system:
+    cacheMs: 10000
+    defaultCacheMs: 10000
+    timeoutMs: 1000
+    defaultTimeoutMs: 1000
+    priority: 10
     checks:
-#      uniqueUsers:
-#        timeoutMs: 1000
-#        type: http
-#        method: POST
-#        endpoint: localhost:8082/druid/v2
-#        headers:
-#          Content-Type: application/json
-#        body: '{"aggregations": [{"name": "unique_users","type": "hyperUnique","fieldName": "user_unique"}],"dataSource": "wikiticker","intervals": "2010-12-08T00:00:00+00:00/2017-12-08T16:26:12+00:00","queryType": "timeseries","granularity": {"type": "period","timeZone": "UTC","period": "PT1H"},"postAggregations": []}'
-#        includeResponseInResult: false
-#        transforms:
-#          - type: js
-#            name: jsTest
-#            function: test
-#            script: |
-#              var test = function(obj) {
-#                print("##################################################");
-#                print(obj);
-#                print("##################################################");
-#                return obj;
-#              };
-#          - type: logger
-#            name: test
-#            level: error
-#          - type: jq
-#            query: '[.[] | .result.unique_users] | add / length'
-#          - type: double
-#        threshold:
-#          warning:
-#            upper: 1000
-#          critical:
-#            upper: 10000
-#      lastIndex:
-#        type: http
-#        method: post
-#        endpoint: localhost:8082/druid/v2
-#        headers:
-#          Content-Type: application/json
-#        body: '{"queryType" : "dataSourceMetadata","dataSource": "metrics"}'
-      js:
-        type: js
-        name: js check
-        file: /tmp/test.js
+      memory:
+        executor:
+          type: memory
+          results: ['total', 'available', 'used', 'percentUsed', 'percentAvailable']
+        evaluation:
+          .*:
+            transform:
+              type: logger
+          percentAvailable:
+            threshold:
+              addContext: true
+              warning:
+                upper: 10
+              critical:
+                upper: 5
+
+#  druid:
+#    alias: apache-druid
+#    cacheMs: 1000
+#    defaultCacheMs: 1000
+#    timeoutMs: 500000
+#    defaultTimeoutMs: 100000
+#    priority: 0
+#    tags:
+#      - http
+#      - java
+#      - test
+#    checks:
+##      uniqueUsers:
+##        timeoutMs: 1000
+##        type: http
+##        method: POST
+##        endpoint: localhost:8082/druid/v2
+##        headers:
+##          Content-Type: application/json
+##        body: '{"aggregations": [{"name": "unique_users","type": "hyperUnique","fieldName": "user_unique"}],"dataSource": "wikiticker","intervals": "2010-12-08T00:00:00+00:00/2017-12-08T16:26:12+00:00","queryType": "timeseries","granularity": {"type": "period","timeZone": "UTC","period": "PT1H"},"postAggregations": []}'
+##        includeResponseInResult: false
+##        transforms:
+##          - type: js
+##            name: jsTest
+##            function: test
+##            script: |
+##              var test = function(obj) {
+##                print("##################################################");
+##                print(obj);
+##                print("##################################################");
+##                return obj;
+##              };
+##          - type: logger
+##            name: test
+##            level: error
+##          - type: jq
+##            query: '[.[] | .result.unique_users] | add / length'
+##          - type: double
+##        threshold:
+##          warning:
+##            upper: 1000
+##          critical:
+##            upper: 10000
+##      lastIndex:
+##        type: http
+##        method: post
+##        endpoint: localhost:8082/druid/v2
+##        headers:
+##          Content-Type: application/json
+##        body: '{"queryType" : "dataSourceMetadata","dataSource": "metrics"}'
+#      js:
+#        type: js
+#        name: js check
+#        file: /tmp/test.js
 #  zookeeper:
 #    alias: zk
 #    cacheMs: 10000
@@ -112,51 +135,51 @@ apps:
 ##          addContext: true
 ##          setMessage: true
 ##          precision: 0
-#  kafka:
-#    alias: messaging
-#    cacheMs: 10000
-#    defaultCacheMs: 1000
-#    timeoutMs: 20000
-#    priority: 2
-#    active:
-#      type: disabled
-#    tags:
-#      - java
-#    checks:
-#      port9092:
-#        type: port
-#        alias: kafkaPort
-#        priority: 2
-#        timeoutMs: 1000
-#        port: 9092
-#        threshold:
-#          warning:
-#            upper: 200
-#          critical:
-#            upper: 500
-#          addContext: true
-#          setMessage: true
-#        tags:
-#          - tcp
-#  os:
-#    checks:
-#      system:
-#        type: system
-#        loadAverage:
-#          threshold:
-#            type: nagios
-#            warning: ~:0.9
-#            critical: ~:1
-#            setMessage: true
-#  test:
-#    timeoutMs: 2000
-#    checks:
-#      crit:
-#        type: critical
-#      warn:
-#        type: warning
-#      succeeded:
-#        type: succeeded
-#      timeout:
-#        type: timeout
-#        unknownIsCritical: false
+##  kafka:
+##    alias: messaging
+##    cacheMs: 10000
+##    defaultCacheMs: 1000
+##    timeoutMs: 20000
+##    priority: 2
+##    active:
+##      type: disabled
+##    tags:
+##      - java
+##    checks:
+##      port9092:
+##        type: port
+##        alias: kafkaPort
+##        priority: 2
+##        timeoutMs: 1000
+##        port: 9092
+##        threshold:
+##          warning:
+##            upper: 200
+##          critical:
+##            upper: 500
+##          addContext: true
+##          setMessage: true
+##        tags:
+##          - tcp
+##  os:
+##    checks:
+##      system:
+##        type: system
+##        loadAverage:
+##          threshold:
+##            type: nagios
+##            warning: ~:0.9
+##            critical: ~:1
+##            setMessage: true
+##  test:
+##    timeoutMs: 2000
+##    checks:
+##      crit:
+##        type: critical
+##      warn:
+##        type: warning
+##      succeeded:
+##        type: succeeded
+##      timeout:
+##        type: timeout
+##        unknownIsCritical: false

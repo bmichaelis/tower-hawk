@@ -4,13 +4,13 @@
 	<jmxConfigurator/>
 	<appender name="console" class="ch.qos.logback.core.ConsoleAppender">
 		<encoder>
-			<pattern>%-5p %d{yyyy-MM-dd'T'HH:mm:ss.SSSZ} [%t] [%C{1}.%M]: %m%n</pattern>
+			<pattern>%-5p %d{yyyy-MM-dd'T'HH:mm:ss.SSSZ} [%t] [%X{check:-towerhawk}] [%C{1}.%M]: %m%n</pattern>
 		</encoder>
 	</appender>
 	<root level="INFO">
 		<appender-ref ref="console"/>
 	</root>
-	<logger name="org.towerhawk.monitor.check.impl.AbstractCheck" additivity="false" level="DEBUG">
+	<logger name="org.towerhawk.monitor.check.DefaultCheck" additivity="false" level="DEBUG">
 		<appender-ref ref="console"/>
 	</logger>
 </configuration>

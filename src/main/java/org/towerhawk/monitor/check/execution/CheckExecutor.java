@@ -3,6 +3,7 @@ package org.towerhawk.monitor.check.execution;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.annotation.JsonTypeIdResolver;
+import org.pf4j.ExtensionPoint;
 import org.towerhawk.monitor.check.Check;
 import org.towerhawk.monitor.check.DefaultCheck;
 import org.towerhawk.monitor.check.execution.constant.SuccessfulCheck;
@@ -14,7 +15,7 @@ import org.towerhawk.spring.config.Configuration;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.CUSTOM, include = JsonTypeInfo.As.PROPERTY, property = "type", visible = true, defaultImpl = SuccessfulCheck.class)
 @JsonTypeIdResolver(CheckExecutorTypeResolver.class)
-public interface CheckExecutor extends AutoCloseable {
+public interface CheckExecutor extends AutoCloseable, ExtensionPoint {
 
 	/**
 	 * Similar to a @PostConstruct. This method should be called by the deserialization

@@ -34,8 +34,8 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
-	<name>Tower Hawk</name>
-	<description>Single entry monitoring app for servers</description>
+	<name>Towerhawk</name>
+	<description>Declarative single endpoint monitoring app for servers</description>
 
 	<parent>
 		<groupId>org.springframework.boot</groupId>

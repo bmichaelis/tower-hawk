@@ -5,8 +5,13 @@ Some alerts should have commands that can be run to fix any issues that may be h
 
 
 TODO:
+  Make archetype for plugins
+  Rework structure to have api, core, server, and plugin modules.
   Make transforms a map, reduce, or flat-map transform
   Run every n milliseconds
+  Corrective action for Checks that have been failing for some Duration
+  Monitor clustering and coordination so that checks can be executed only once
+      for cluster level checks
   #Use alpine-java docker image
   Separate Abstract Check from others and need for checks to be aware of transforms or thresholds
   Investigate using @JsonUnwrapped to simplify yaml configuration

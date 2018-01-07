@@ -4,8 +4,4 @@ ARG JAR=*.jar
 
 ADD target/$JAR $APP_HOME/
 
-EXPOSE 4295
-
-ENV
-
 USER $USER:$GROUP

@@ -34,12 +34,6 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <dependency>
-            <groupId>org.towerhawk</groupId>
-            <artifactId>towerhawk</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-            <scope>provided</scope>
-        </dependency>
     </dependencies>
 
     <build>
@@ -55,11 +49,11 @@
                     <goals>
                       <goal>read-project-properties</goal>
                     </goals>
-                    <configuration>
+                    <config>
                       <files>
                         <file>plugin.properties</file>
                       </files>
-                    </configuration>
+                    </config>
                   </execution>
                 </executions>
             </plugin>
@@ -129,6 +123,7 @@
                 <configuration>
                     <skip>true</skip>
                 </configuration>
+                <version>2.8.2</version>
             </plugin>
         </plugins>
     </build>

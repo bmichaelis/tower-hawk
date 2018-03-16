@@ -17,7 +17,7 @@ public class ConcurrentCheckRunConfiguration extends AbstractReflectiveConfig {
 	private int corePoolSize = Runtime.getRuntime().availableProcessors();
 	private int maxPoolSize = corePoolSize * 4;
 	private int queueCapacity = corePoolSize * 1000;
-	private int keepAliveSeconds = 60;
+	private int keepAliveSeconds = 600;
 	private boolean allowCoreTimeout = true;
 	private String threadGroupName = "CheckRunner";
 	private String threadNamePrefix = "CheckRunner - ";

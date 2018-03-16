@@ -2,43 +2,48 @@ package org.towerhawk.monitor.check.evaluation.transform;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Getter;
+import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.towerhawk.serde.resolver.TowerhawkType;
+
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 @Getter
-@JsonTypeInfo(use = JsonTypeInfo.Id.NONE)
+@TowerhawkType("logger")
 public class LoggerTransform implements Transform {
 
+	@Setter
 	private String level = "INFO";
 	private String name = "logger";
 	private Logger log = LoggerFactory.getLogger(this.getClass());
+	private transient Consumer<Object> loggingFunction = o -> log.info(o.toString());
 
-	public void setLevel(String level) {
-		this.level = level.toUpperCase();
-	}
 	public void setName(String name) {
 		this.name = name;
 		log = LoggerFactory.getLogger(this.getClass().getCanonicalName() + "." + name);
+		switch (level.toUpperCase()) {
+			case "ERROR":
+				loggingFunction = o -> log.error(o.toString());
+				break;
+			case "WARN":
+				loggingFunction = o -> log.warn(o.toString());
+				break;
+			case "DEBUG":
+				loggingFunction = o -> log.debug(o.toString());
+				break;
+			case "TRACE":
+				loggingFunction = o -> log.trace(o.toString());
+				break;
+			default:
+				loggingFunction = o -> log.info(o.toString());
+		}
 	}
 
 	@Override
 	public Object transform(Object value) throws Exception {
-		switch (level) {
-			case "ERROR":
-				log.error(value.toString());
-				break;
-			case "WARN":
-				log.warn(value.toString());
-				break;
-			case "DEBUG":
-				log.debug(value.toString());
-				break;
-			case "TRACE":
-				log.trace(value.toString());
-				break;
-			default:
-				log.info(value.toString());
-		}
+		loggingFunction.accept(value);
 		return value;
 	}
 }

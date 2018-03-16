@@ -84,7 +84,7 @@ public class Configuration extends AbstractReflectiveConfig {
 		dateTimeFormatter = DateTimeFormatter.ofPattern(defaultDateFormat, locale);
 		if (checkRunDefaultFields == null || checkRunDefaultFields.isEmpty()) {
 			checkRunDefaultFields = Arrays.asList(status, message, context,
-					duration, failingSince);
+					duration, failingSince, results);
 		}
 		if (hardTimeoutMsLimit < 30000) {
 			hardTimeoutMsLimit = 30000;

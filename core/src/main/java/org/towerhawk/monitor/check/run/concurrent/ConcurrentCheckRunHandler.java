@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.towerhawk.monitor.check.Check;
+import org.towerhawk.monitor.descriptors.Interruptable;
 import org.towerhawk.monitor.check.logging.CheckMDC;
 import org.towerhawk.monitor.check.run.CheckRun;
 import org.towerhawk.monitor.check.run.context.RunContext;
@@ -75,7 +76,7 @@ public class ConcurrentCheckRunHandler implements Callable<CheckRun>, Comparable
 	@Override
 	public CheckRun call() throws Exception {
 		CheckMDC.put(check);
-		timeoutEpoch = System.currentTimeMillis() + check.getTimeoutMs();
+		timeoutEpoch = System.currentTimeMillis() + (check instanceof Interruptable ? ((Interruptable)check).getTimeoutMs() : 10000);
 		checkRun = null;
 		try {
 			log.debug("Submitting handler for check to interruptor");

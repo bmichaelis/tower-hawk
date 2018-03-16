@@ -5,12 +5,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.pf4j.Extension;
 import org.towerhawk.monitor.check.run.CheckRun;
 import org.towerhawk.scripting.NashornScriptEvaluator;
+import org.towerhawk.serde.resolver.TowerhawkType;
 
 @Getter
 @Setter
 @Slf4j
+@TowerhawkType({"js","javaScript"})
+@Extension
 public class JavaScriptThreshold implements Threshold {
 
 	private NashornScriptEvaluator evaluator;

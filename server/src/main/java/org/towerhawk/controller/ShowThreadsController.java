@@ -24,7 +24,7 @@ public class ShowThreadsController {
 	enum SortPriority {
 		id,
 		name,
-		nameIC, //name ignore case
+		lowerName, //name ignore case
 		state
 	}
 
@@ -34,7 +34,7 @@ public class ShowThreadsController {
 			@RequestParam(defaultValue = "false") boolean desc,
 			@RequestParam(required = false) List<Thread.State> state,
 			@RequestParam(required = false) List<String> name,
-			@RequestParam(required = false) List<String> nameIC,
+			@RequestParam(required = false) List<String> lowerName,
 			@RequestParam(required = false) List<Long> id
 	) {
 		//always sort by id as a last resort
@@ -57,9 +57,9 @@ public class ShowThreadsController {
 				}
 				valid = valid && v;
 			}
-			if (nameIC != null) {
+			if (lowerName != null) {
 				boolean v = false;
-				for (String s : nameIC) {
+				for (String s : lowerName) {
 					v = v || s.equalsIgnoreCase(t.getThreadName());
 				}
 				valid = valid && v;
@@ -95,7 +95,7 @@ public class ShowThreadsController {
 					sortVal = Long.compare(c1.getThreadId(), c2.getThreadId());
 				} else if (sortPriority == SortPriority.name) {
 					sortVal = c1.getThreadName().compareTo(c2.getThreadName());
-				} else if (sortPriority == SortPriority.nameIC) {
+				} else if (sortPriority == SortPriority.lowerName) {
 					sortVal = c1.getThreadName().compareToIgnoreCase(c2.getThreadName());
 				} else if (sortPriority == SortPriority.state) {
 					sortVal = c1.getThreadState().compareTo(c2.getThreadState());

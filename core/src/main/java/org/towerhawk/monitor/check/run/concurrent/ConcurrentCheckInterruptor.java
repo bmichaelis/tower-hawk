@@ -23,9 +23,9 @@ public class ConcurrentCheckInterruptor implements Runnable, AutoCloseable {
 
 	@Inject
 	public ConcurrentCheckInterruptor(Config config) {
-		threadName = config.getString("interruptorThreadName", "ConcurrentCheckInterruptorThread");
-		priority = config.getInt("interruptorPriority", 6);
-		pollMs = config.getLong("interruptorPollMs", 10000L);
+		threadName = config.getString("threadName", "ConcurrentCheckInterruptorThread");
+		priority = config.getInt("priority", 6);
+		pollMs = config.getLong("pollMs", 10000L);
 		this.interruptorService.submit(this);
 	}
 
@@ -103,7 +103,7 @@ public class ConcurrentCheckInterruptor implements Runnable, AutoCloseable {
 				}
 				log.error("Caught unexpected exception for check", t);
 			} finally {
-				CheckMDC.remove();
+				CheckMDC.clear();
 			}
 		}
 	}

@@ -1,13 +1,16 @@
 package org.towerhawk.monitor.check.run;
 
 import lombok.Getter;
+import org.pf4j.Extension;
 import org.towerhawk.monitor.check.Check;
+import org.towerhawk.monitor.descriptors.Prioritizable;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
 
 @Getter
+@Extension
 public class CheckRunSelector implements CheckRun {
 
 	public enum Field {
@@ -31,22 +34,22 @@ public class CheckRunSelector implements CheckRun {
 		_all
 	}
 
-	private Status status = null;
-	private Throwable error = null;
-	private String message = null;
-	private Map<String, Object> context = null;
-	private Duration duration = null;
-	private ZonedDateTime startTime = null;
-	private ZonedDateTime endTime = null;
-	private ZonedDateTime failingSince = null;
-	private Boolean timedOut = null;
-	private String id = null;
-	private String type = null;
-	private Set<String> tags = null;
-	private Byte priority = null;
-	private Check check = null;
-	private CheckRun previousCheckRun = null;
-	private Map<String, Object> results = null;
+	protected Status status = null;
+	protected Throwable error = null;
+	protected String message = null;
+	protected Map<String, Object> context = null;
+	protected Duration duration = null;
+	protected ZonedDateTime startTime = null;
+	protected ZonedDateTime endTime = null;
+	protected ZonedDateTime failingSince = null;
+	protected Boolean timedOut = null;
+	protected String id = null;
+	protected String type = null;
+	protected Set<String> tags = null;
+	protected Byte priority = null;
+	protected Check check = null;
+	protected CheckRun previousCheckRun = null;
+	protected Map<String, Object> results = null;
 
 	public CheckRunSelector(CheckRun checkRun, Collection<Field> fields) {
 		final Set<Field> fieldSet = new HashSet<>(fields);
@@ -57,6 +60,7 @@ public class CheckRunSelector implements CheckRun {
 				}
 			}
 		}
+		boolean includeRecursiveCheckRun = fieldSet.contains(Field.recursiveCheckRun);
 		if (fieldSet.contains(Field.status)) {
 			status = checkRun.getStatus();
 		}
@@ -66,23 +70,7 @@ public class CheckRunSelector implements CheckRun {
 		if (fieldSet.contains(Field.message)) {
 			message = checkRun.getMessage();
 		}
-		boolean includeContext = fieldSet.contains(Field.context);
-		boolean includeRecursiveCheckRun = fieldSet.contains(Field.recursiveCheckRun);
-		if (includeContext || includeRecursiveCheckRun) {
-			if (checkRun.getContext() != null) {
-				context = new LinkedHashMap<>();
-				//This keeps contexts in their same order and should be safe for non-concurrent maps like LinkedHashMap
-				checkRun.getContext().entrySet().stream().forEachOrdered(e -> {
-					if (includeContext || e.getValue() instanceof CheckRun) {
-						Object value = e.getValue() instanceof CheckRun ? new CheckRunSelector((CheckRun) e.getValue(), fieldSet) : e.getValue();
-						context.put(e.getKey(), value);
-					}
-				});
-				if (context.isEmpty()) {
-					context = null;
-				}
-			}
-		}
+		context = filterMapForCheckRuns(checkRun.getContext(), Field.context, includeRecursiveCheckRun, fieldSet);
 		if (fieldSet.contains(Field.duration)) {
 			duration = checkRun.getDuration();
 		}
@@ -107,8 +95,8 @@ public class CheckRunSelector implements CheckRun {
 		if (fieldSet.contains(Field.tags)) {
 			tags = checkRun.getCheck().getTags();
 		}
-		if (fieldSet.contains(Field.type)) {
-			priority = checkRun.getCheck().getPriority();
+		if (fieldSet.contains(Field.type) && checkRun.getCheck() instanceof Prioritizable) {
+			priority = ((Prioritizable)checkRun.getCheck()).getPriority();
 		}
 		if (fieldSet.contains(Field.check)) {
 			check = checkRun.getCheck();
@@ -121,9 +109,23 @@ public class CheckRunSelector implements CheckRun {
 				previousCheckRun = new CheckRunSelector(previousCheckRun, newSet);
 			}
 		}
-		if (fields.contains(Field.results)) {
-			results = checkRun.getResults();
+		results = filterMapForCheckRuns(checkRun.getResults(), Field.results, includeRecursiveCheckRun, fieldSet);
+	}
+
+	private Map<String, Object> filterMapForCheckRuns(Map<String, Object> map, Field field, boolean includeRecursiveCheckRun, Set<Field> fieldSet) {
+		boolean include = fieldSet.contains(field);
+		if ((include || includeRecursiveCheckRun) && map != null) {
+			Map<String, Object> filteredMap = new LinkedHashMap<>();
+			//This keeps contexts in their same order and should be safe for non-concurrent maps like LinkedHashMap
+			map.forEach((k, v) -> {
+				if (include || (v instanceof CheckRun)) {
+					Object value = v instanceof CheckRun ? new CheckRunSelector((CheckRun) v, fieldSet) : v;
+					filteredMap.put(k, value);
+				}
+			});
+			return filteredMap.isEmpty() ? null : filteredMap;
 		}
+		return null;
 	}
 
 	@Override

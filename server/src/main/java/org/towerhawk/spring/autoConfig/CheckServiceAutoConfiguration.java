@@ -5,6 +5,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolExecutorFactoryBean;
 import org.towerhawk.monitor.check.run.concurrent.ConcurrentCheckInterruptor;
 import org.towerhawk.monitor.check.run.concurrent.ConcurrentCheckRunner;
 import org.towerhawk.spring.config.ConcurrentAppRunConfiguration;
+import org.towerhawk.spring.config.ConcurrentCheckInterruptorConfiguration;
 import org.towerhawk.spring.config.ConcurrentCheckRunConfiguration;
 
 import java.util.concurrent.ExecutorService;
@@ -38,6 +39,11 @@ public class CheckServiceAutoConfiguration {
 		t.setThreadNamePrefix(threadNamePrefix);
 		t.setWaitForTasksToCompleteOnShutdown(config.isWaitForTasksToCompleteOnShutdown());
 		return t;
+	}
+
+	@Bean
+	public ConcurrentCheckInterruptor interruptor(ConcurrentCheckInterruptorConfiguration configuration) {
+		return new ConcurrentCheckInterruptor(configuration);
 	}
 
 	@Bean

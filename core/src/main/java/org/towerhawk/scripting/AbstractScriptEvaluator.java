@@ -35,7 +35,7 @@ public abstract class AbstractScriptEvaluator {
 		}
 
 		if (this.script == null || this.script.isEmpty()) {
-			throw new IllegalArgumentException("Either script or file must be set for '" + getName() + "' and not have empty contents. The tower-hawk user must have read and execute permissions on the file.");
+			throw new IllegalArgumentException("Either script or file must be set for '" + getName() + "' and not have empty contents. The towerhawk user must have read and execute permissions on the file.");
 		}
 	}
 

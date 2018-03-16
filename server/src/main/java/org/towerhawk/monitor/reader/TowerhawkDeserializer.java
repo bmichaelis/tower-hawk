@@ -26,7 +26,7 @@ public class TowerhawkDeserializer<T> extends StdDeserializer<T> {
 
 	public static final String DEFAULT_TYPE_NAME = "type";
 
-	public TowerhawkDeserializer(Class<T> c, FastClasspathScanner fastScanner) {
+	public TowerhawkDeserializer(Class<T> c) {
 		super(c);
 		String simpleName = c.getSimpleName();
 		if (simpleName.length() > 0) {
@@ -56,18 +56,24 @@ public class TowerhawkDeserializer<T> extends StdDeserializer<T> {
 		ObjectMapper mapper = (ObjectMapper) jp.getCodec();
 		ObjectNode root = mapper.readTree(jp);
 		JsonNode typeString = root.get(DEFAULT_TYPE_NAME);
+		root.remove(DEFAULT_TYPE_NAME);
 		if (typeString == null) {
 			typeString = root.get(alternativeTypeName);
+			root.remove(alternativeTypeName);
 		}
 		JavaType type = null;
 		if (typeString != null) {
-			type = classes.get(typeString.asText());
+			type = classes.get(typeString.asText().toLowerCase());
 		}
 		type = type == null ? defaultType : type;
+		if (type == null) {
+			log.error("Unable to find {} for '{}'", _valueClass.getSimpleName(), root);
+			return null;
+		}
 		try {
 			return mapper.convertValue(root, type);
 		} catch (RuntimeException e) {
-			log.error("Unable to deserialize '{}' to type {}", root, type.getTypeName());
+			log.error("Unable to deserialize '{}' to type {}", root, type.getRawClass().getCanonicalName(), e);
 			throw e;
 		}
 	}

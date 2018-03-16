@@ -30,7 +30,7 @@ public class ConcurrentCheckRunAccumulator implements CheckRunAccumulator {
 			checkRuns.add(checkRun);
 			checkSet.remove(checkRun.getCheck());
 		} catch (Exception e) {
-			log.error("Unable to accumulate check");
+			log.error("Unable to accumulate check", e);
 		} finally {
 			latch.countDown();
 			CheckMDC.remove();

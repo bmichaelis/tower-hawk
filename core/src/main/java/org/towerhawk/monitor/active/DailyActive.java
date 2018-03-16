@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.pf4j.Extension;
 import org.towerhawk.serde.resolver.TowerhawkType;
 
 import java.time.LocalTime;
@@ -12,14 +13,15 @@ import java.time.format.DateTimeFormatter;
 @Slf4j
 @Getter
 @TowerhawkType("daily")
-public class DailySchedule implements Active {
+@Extension
+public class DailyActive implements Active {
 
 	private LocalTime startTime;
 	private LocalTime endTime;
 	private DateTimeFormatter timeFormat;
 
 	@JsonCreator
-	public DailySchedule(@JsonProperty("startTime") String startTime
+	public DailyActive(@JsonProperty("startTime") String startTime
 			, @JsonProperty("endTime") String endTime
 			, @JsonProperty("timeFormat") String timeFormat) {
 		if (timeFormat == null || timeFormat.isEmpty()) {

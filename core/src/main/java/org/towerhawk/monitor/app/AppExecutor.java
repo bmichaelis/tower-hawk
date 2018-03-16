@@ -3,6 +3,7 @@ package org.towerhawk.monitor.app;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.pf4j.Extension;
 import org.towerhawk.config.Config;
 import org.towerhawk.monitor.check.Check;
 import org.towerhawk.monitor.check.execution.CheckExecutor;
@@ -13,12 +14,14 @@ import org.towerhawk.monitor.check.run.CheckRunner;
 import org.towerhawk.monitor.check.run.context.RunContext;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Getter
 @Setter
+@Extension
 public class AppExecutor implements CheckExecutor {
 
 	protected App app;

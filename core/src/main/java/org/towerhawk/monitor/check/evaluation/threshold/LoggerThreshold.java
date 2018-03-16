@@ -4,10 +4,12 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.towerhawk.monitor.check.run.CheckRun;
+import org.towerhawk.serde.resolver.TowerhawkType;
 
 @Getter
 @Setter
 @Slf4j
+@TowerhawkType("logger")
 public class LoggerThreshold implements Threshold {
 
 	@Override

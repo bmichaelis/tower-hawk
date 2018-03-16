@@ -3,23 +3,19 @@ package org.towerhawk.monitor.reader;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.Version;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.InjectableValues;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner;
-import io.github.lukehutch.fastclasspathscanner.matchprocessor.ClassAnnotationMatchProcessor;
-import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult;
+import lombok.Getter;
 import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
 import org.pf4j.PluginManager;
-import org.pf4j.PluginStateEvent;
-import org.pf4j.PluginStateListener;
 import org.pf4j.PluginWrapper;
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
-import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.towerhawk.monitor.app.App;
-import org.towerhawk.monitor.check.execution.CheckExecutor;
 import org.towerhawk.plugin.TowerhawkPluginManager;
 import org.towerhawk.serde.resolver.ExtensibleAPI;
 import org.towerhawk.serde.resolver.TowerhawkIgnore;
@@ -30,13 +26,15 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
 import java.lang.reflect.Modifier;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
 @Slf4j
 @Named
 public class CheckRefresher {
-	private File definitionsDir;
+	@Getter
+	private Path definitionsDir;
 	private ObjectMapper mapper;
 	private TowerhawkPluginManager tpm;
 
@@ -47,15 +45,9 @@ public class CheckRefresher {
 
 	public CheckRefresher(String definitionsDir, TowerhawkPluginManager towerhawkPluginManager) {
 		this.tpm = towerhawkPluginManager;
-		this.definitionsDir = Paths.get(definitionsDir).toFile();
+		this.definitionsDir = Paths.get(definitionsDir);
 
-		mapper = new ObjectMapper(new YAMLFactory());
-		mapper.enable(JsonParser.Feature.ALLOW_YAML_COMMENTS);
-		mapper.enable(JsonGenerator.Feature.IGNORE_UNKNOWN);
-		mapper.enable(JsonParser.Feature.IGNORE_UNDEFINED);
-		mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,
-				false);
-		mapper.configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
+		mapper = initalizeObjectMapper();
 
 		SimpleModule module =
 				new SimpleModule("TowerhawkDeserializerModule",
@@ -71,7 +63,7 @@ public class CheckRefresher {
 		Map<Class, TowerhawkDeserializer> deserializerMap = new HashMap<>();
 
 		ExtensibleAPI.CLASSES.forEach(apiClass -> {
-			TowerhawkDeserializer deserializer = new TowerhawkDeserializer<>(apiClass, fastScanner);
+			TowerhawkDeserializer deserializer = new TowerhawkDeserializer<>(apiClass);
 			deserializerMap.put(apiClass, deserializer);
 			fastScanner.matchClassesImplementing(apiClass, c -> {
 				int mod = c.getModifiers();
@@ -103,6 +95,20 @@ public class CheckRefresher {
 		});
 
 		mapper.registerModule(module);
+		ObjectMapper injectableMapper = initalizeObjectMapper();
+		injectableMapper.registerModule(module);
+		mapper.setInjectableValues(new InjectableValues.Std().addValue(ObjectMapper.class, injectableMapper));
+	}
+
+	private ObjectMapper initalizeObjectMapper() {
+		ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+		mapper.enable(JsonParser.Feature.ALLOW_YAML_COMMENTS);
+		mapper.enable(JsonGenerator.Feature.IGNORE_UNKNOWN);
+		mapper.enable(JsonParser.Feature.IGNORE_UNDEFINED);
+		mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,
+				false);
+		mapper.configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false);
+		return mapper;
 	}
 
 	private boolean shouldIgnoreClass(Class<?> c, Class<?> apiClass) {
@@ -111,7 +117,7 @@ public class CheckRefresher {
 		}
 		TowerhawkIgnore ignore = c.getAnnotation(TowerhawkIgnore.class);
 		if (ignore != null) {
-			for (Class compare : ignore.ignore()) {
+			for (Class compare : ignore.value()) {
 				if (c.equals(compare)) {
 					return true;
 				} else if (apiClass.equals(compare)) {
@@ -128,13 +134,13 @@ public class CheckRefresher {
 	}
 
 	public static boolean validFile(File file) {
-		return file.toString().endsWith(".yaml") || file.toString().endsWith(".yml");
+		return file.toString().endsWith(".yaml") || file.toString().endsWith(".yml") || file.toString().endsWith(".json");
 	}
 
 	@Synchronized
 	public CheckDTO readDefinitions() {
 		List<CheckDTO> checkDTOs = new ArrayList<>();
-		for (File file : definitionsDir.listFiles()) {
+		for (File file : definitionsDir.toFile().listFiles()) {
 			if (validFile(file)) {
 				try {
 					log.info("Refreshing file {}", file);
@@ -145,7 +151,7 @@ public class CheckRefresher {
 					} else {
 						throw new IllegalArgumentException("Unable to deserialize yaml file " + file.toString() + " to object structure", e);
 					}
-				}	catch (Exception e) {
+				} catch (Exception e) {
 					log.error("Failed to deserialize yaml file {}", file.toString(), e);
 					throw new IllegalArgumentException("Failed to deserialize yaml file " + file.toString(), e);
 				}

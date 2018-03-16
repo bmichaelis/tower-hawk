@@ -11,17 +11,38 @@ apps:
           type: portcheck
           port: 2181
           send: mntr
-        evaluation:
+        evaluator:
+          type: regex
           .*:
             transform:
               type: logger
-          percentAvailable:
-            threshold:
-              addContext: true
-              warning:
-                upper: 10
-              critical:
-                upper: 5
+  kafka:
+    cacheMs: 10000
+    defaultCacheMs: 1000
+    timeoutMs: 3000
+    defaultTimeoutMs: 3000
+    priority: 10
+    checks:
+      lag:
+        schedule:
+          type: multi
+          schedules:
+            - duration: PT15S
+#            - type: quartz
+#              cron: "*/10 * * * * ? *"
+        executor:
+          type: kafkaConsumerLag
+          brokers: localhost:9092
+          group: towerhawk
+        evaluator:
+          type: regex
+          .*:
+            transform:
+              type: logger
+          result:
+            transform:
+              type: kafkaProducerTransform
+              topic: test_kafka_telegraf
 
 #  druid:
 #    alias: apache-druid

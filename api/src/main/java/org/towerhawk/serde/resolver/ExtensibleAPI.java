@@ -1,16 +1,16 @@
 package org.towerhawk.serde.resolver;
 
 import org.pf4j.ExtensionPoint;
-import org.towerhawk.config.Config;
 import org.towerhawk.monitor.active.Active;
 import org.towerhawk.monitor.app.App;
 import org.towerhawk.monitor.check.Check;
-import org.towerhawk.monitor.check.evaluation.Evaluation;
+import org.towerhawk.monitor.check.evaluation.Evaluator;
 import org.towerhawk.monitor.check.evaluation.threshold.Threshold;
 import org.towerhawk.monitor.check.evaluation.transform.Transform;
 import org.towerhawk.monitor.check.execution.CheckExecutor;
 import org.towerhawk.monitor.check.run.CheckRun;
 import org.towerhawk.monitor.check.run.CheckRunner;
+import org.towerhawk.monitor.schedule.ScheduleCollector;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,13 +32,14 @@ public class ExtensibleAPI {
 		List<Class<? extends ExtensionPoint>> classes = new ArrayList<>();
 		classes.add(Active.class);
 		classes.add(App.class);
-		classes.add(Evaluation.class);
+		classes.add(Evaluator.class);
 		classes.add(Transform.class);
 		classes.add(Threshold.class);
 		classes.add(CheckExecutor.class);
 		classes.add(CheckRun.class);
 		classes.add(Check.class);
 		classes.add(CheckRunner.class);
+		classes.add(ScheduleCollector.class);
 
 		CLASSES = Collections.unmodifiableList(classes);
 	}

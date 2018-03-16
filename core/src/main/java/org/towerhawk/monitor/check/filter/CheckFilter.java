@@ -2,6 +2,8 @@ package org.towerhawk.monitor.check.filter;
 
 import lombok.NonNull;
 import org.towerhawk.monitor.check.Check;
+import org.towerhawk.monitor.descriptors.Filterable;
+import org.towerhawk.monitor.descriptors.Prioritizable;
 
 import java.util.Collection;
 import java.util.Set;
@@ -34,60 +36,69 @@ public class CheckFilter {
 		this.notId = notId;
 	}
 
-	public boolean filter(@NonNull Check check) {
-		return priority(check)
-				&& priorityLte(check)
-				&& priorityGte(check)
-				&& tags(check)
+	private boolean priorityFilter(Filterable check) {
+		boolean priorityFilter = false;
+		if (check instanceof Prioritizable) {
+			Prioritizable prioritizable = (Prioritizable) check;
+			priorityFilter = priority(prioritizable)
+					&& priorityLte(prioritizable)
+					&& priorityGte(prioritizable);
+		}
+		return priorityFilter;
+	}
+
+	public boolean filter(@NonNull Filterable check) {
+		return tags(check)
 				&& notTags(check)
 				&& type(check)
 				&& notType(check)
 				&& id(check)
-				&& notId(check);
+				&& notId(check)
+				&& priorityFilter(check);
 	}
 
-	private boolean priority(Check check) {
+	private boolean priority(Prioritizable prioritizable) {
 		if (priority == null) {
 			return true;
 		}
 		//no lambda for early stopping
 		for (int i : priority) {
-			if (check.getPriority() == i) {
+			if (prioritizable.getPriority() == i) {
 				return true;
 			}
 		}
 		return false;
 	}
 
-	private boolean priorityLte(Check check) {
-		return priorityLte == null || check.getPriority() <= priorityLte;
+	private boolean priorityLte(Prioritizable prioritizable) {
+		return priorityLte == null || prioritizable.getPriority() <= priorityLte;
 	}
 
-	private boolean priorityGte(Check check) {
-		return priorityGte == null || check.getPriority() >= priorityGte;
+	private boolean priorityGte(Prioritizable prioritizable) {
+		return priorityGte == null || prioritizable.getPriority() >= priorityGte;
 	}
 
-	private boolean tags(Check check) {
+	private boolean tags(Filterable check) {
 		return evalTags(check, tags, true);
 	}
 
-	private boolean notTags(Check check) {
+	private boolean notTags(Filterable check) {
 		return evalTags(check, notTags, false);
 	}
 
-	private boolean type(Check check) {
+	private boolean type(Filterable check) {
 		return evalString(check.getType(), type, true);
 	}
 
-	private boolean notType(Check check) {
+	private boolean notType(Filterable check) {
 		return evalString(check.getType(), notType, false);
 	}
 
-	private boolean id(Check check) {
+	private boolean id(Filterable check) {
 		return evalString(check.getId(), id, true) || evalString(check.getAlias(), id, true);
 	}
 
-	private boolean notId(Check check) {
+	private boolean notId(Filterable check) {
 		return evalString(check.getId(), notId, false) && evalString(check.getAlias(), notId, false);
 	}
 
@@ -103,7 +114,7 @@ public class CheckFilter {
 		return !onMatch;
 	}
 
-	private boolean evalTags(Check check, Collection<String> tags, boolean onMatch) {
+	private boolean evalTags(Filterable check, Collection<String> tags, boolean onMatch) {
 		if (tags == null) {
 			return true;
 		}

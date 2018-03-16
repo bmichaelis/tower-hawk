@@ -76,7 +76,7 @@ public class NagiosSyntaxThresholdTest {
 	public void evaluateString() throws Exception {
 		Threshold threshold = new NagiosSyntaxThreshold("10", "20");
 		threshold.evaluate(builder, "replaceThisDefaultValue", "5", false, false);
-		assertTrue("Expected that a string as a number succeeds on evaluation", builder.getStatus() == SUCCEEDED);
+		assertTrue("Expected that a string as a number succeeds on evaluator", builder.getStatus() == SUCCEEDED);
 		threshold.evaluate(builder, "replaceThisDefaultValue", "someString", false, false);
 		assertTrue("Expected an error but got none", builder.build().getError() != null);
 	}
@@ -85,7 +85,7 @@ public class NagiosSyntaxThresholdTest {
 	public void evaluateObject() throws Exception {
 		Threshold threshold = new NagiosSyntaxThreshold("10", "20");
 		threshold.evaluate(builder, "replaceThisDefaultValue", new Long(5), false, false);
-		assertTrue("Expected that a Number type succeeds on evaluation", builder.getStatus() == SUCCEEDED);
+		assertTrue("Expected that a Number type succeeds on evaluator", builder.getStatus() == SUCCEEDED);
 		threshold.evaluate(builder, "replaceThisDefaultValue", new Object(), false, false);
 		assertTrue(builder.build().getError() != null);
 	}

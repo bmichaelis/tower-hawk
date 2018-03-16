@@ -5,10 +5,12 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.towerhawk.config.Config;
 import org.towerhawk.monitor.check.Check;
+import org.towerhawk.monitor.descriptors.Interruptable;
 import org.towerhawk.monitor.check.execution.CheckExecutor;
 import org.towerhawk.monitor.check.execution.ExecutionResult;
 import org.towerhawk.monitor.check.run.CheckRun;
 import org.towerhawk.monitor.check.run.context.RunContext;
+import org.towerhawk.serde.resolver.TowerhawkType;
 
 import java.io.*;
 import java.net.InetAddress;
@@ -18,6 +20,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Getter
 @Setter
+@TowerhawkType("port")
 public class PortCheck implements CheckExecutor {
 
 	private int port;
@@ -60,7 +63,9 @@ public class PortCheck implements CheckExecutor {
 			ExecutionResult result = ExecutionResult.startTimer();
 			socket = getSocket();
 			if (send != null) {
-				long msRemaining = builder.getCheck().getMsRemaining(true);
+				long msRemaining = builder.getCheck() instanceof Interruptable ?
+						((Interruptable)builder.getCheck()).getMsRemaining() :
+						Integer.MAX_VALUE;
 				if (msRemaining > Integer.MAX_VALUE) {
 					msRemaining = Integer.MAX_VALUE;
 				}

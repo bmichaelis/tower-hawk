@@ -6,11 +6,12 @@ import lombok.NonNull;
 import lombok.Setter;
 import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
+import org.pf4j.Extension;
 import org.towerhawk.config.Config;
 import org.towerhawk.monitor.active.Active;
 import org.towerhawk.monitor.active.Enabled;
 import org.towerhawk.monitor.app.App;
-import org.towerhawk.monitor.check.evaluation.Evaluation;
+import org.towerhawk.monitor.check.evaluation.Evaluator;
 import org.towerhawk.monitor.check.execution.CheckExecutor;
 import org.towerhawk.monitor.check.execution.ExecutionResult;
 import org.towerhawk.monitor.check.logging.CheckMDC;
@@ -18,6 +19,9 @@ import org.towerhawk.monitor.check.recent.RecentCheckRun;
 import org.towerhawk.monitor.check.run.CheckRun;
 import org.towerhawk.monitor.check.run.Status;
 import org.towerhawk.monitor.check.run.context.RunContext;
+import org.towerhawk.monitor.descriptors.*;
+import org.towerhawk.monitor.schedule.EmptyScheduleCollector;
+import org.towerhawk.monitor.schedule.ScheduleCollector;
 import org.towerhawk.serde.resolver.TowerhawkType;
 
 import java.time.Duration;
@@ -28,8 +32,9 @@ import java.util.*;
 
 @Slf4j
 @Getter
+@Extension
 @TowerhawkType("default")
-public class DefaultCheck implements Check {
+public class DefaultCheck implements Check, Activatable, Cacheable, Dependable, Evaluatable, Executable, Failable, Prioritizable, Restartable, Schedulable, Interruptable {
 
 	/**
 	 * The id for this check. This should match the dictionary key in the config yaml.
@@ -72,6 +77,17 @@ public class DefaultCheck implements Check {
 	 * The timestamp containing the last time the check started executing.
 	 */
 	private transient long runStartTimestamp = 0;
+
+	/**
+	 * The interval used to schedule runs of this check.
+	 */
+	@Setter
+	private ScheduleCollector schedule = new EmptyScheduleCollector();
+
+	@Override
+	public ScheduleCollector getScheduleCollector() {
+		return schedule;
+	}
 
 	/**
 	 * This determines whether the check is active right now or not. This allows different
@@ -146,6 +162,7 @@ public class DefaultCheck implements Check {
 	 * Determines if this check is currently running.
 	 * true if running, false otherwise
 	 */
+	@JsonIgnore
 	private transient boolean running = false;
 
 	/**
@@ -173,7 +190,7 @@ public class DefaultCheck implements Check {
 	 * for the results of a single execution to have multiple checks run on it.
 	 */
 	@Setter
-	private Evaluation evaluation;
+	private Evaluator evaluator;
 
 	/**
 	 * The ${@link CheckExecutor} used to run the checks.
@@ -207,20 +224,18 @@ public class DefaultCheck implements Check {
 		return recentCheckRuns.getLastRun();
 	}
 
+	@JsonIgnore
 	@Override
 	public List<CheckRun> getRecentCheckRuns() {
 		return recentCheckRuns.getRecentCheckRuns();
 	}
 
 	@Override
-	public final boolean isCached() {
-		return cachedFor() > 0;
-	}
-
-	protected final long cachedFor() {
+	public long cachedForMs() {
 		return getCacheMs() - (System.currentTimeMillis() - runEndTimestamp);
 	}
 
+	@Override
 	public long getMsRemaining(boolean throwException) {
 		long timeRemaining = getTimeoutMs() - (System.currentTimeMillis() - runStartTimestamp);
 		if (timeRemaining < 0 && throwException) {
@@ -263,6 +278,11 @@ public class DefaultCheck implements Check {
 		}
 	}
 
+	@Override
+	public boolean canRun() {
+		return initialized && isActive() && !isRunning() && !isCached();
+	}
+
 	/**
 	 * This is where the real work happens. A ${@link CheckRun} is returned containing information
 	 * about how the check went. This can be a synchronized method to ensure that multiple
@@ -278,7 +298,8 @@ public class DefaultCheck implements Check {
 	public final CheckRun run(RunContext runContext) {
 		CheckMDC.put(this);
 		CheckRun checkRun;
-		if (!runContext.shouldRun() || !canRun()) {
+		long cachedFor;
+		if (!initialized || !runContext.shouldRun() || !canRun()) {
 			if (running) {
 				log.debug("Check is already running");
 			} else if (!initialized) {
@@ -292,8 +313,8 @@ public class DefaultCheck implements Check {
 					copyRunBuilder.addContext("inactive", "Check is not active and was failing");
 					recentCheckRuns.addCheckRun(copyRunBuilder.build());
 				}
-			} else if (isCached()) {
-				log.debug("Check is cached for {} more ms", cachedFor());
+			} else if ((cachedFor = cachedForMs()) > 0) {
+				log.debug("Check is cached for {} more ms", cachedFor);
 			}
 			return getLastCheckRun();
 		}
@@ -306,7 +327,7 @@ public class DefaultCheck implements Check {
 			ExecutionResult result = executor.execute(builder, runContext);
 			builder.result(result);
 			methodRun = "evaluate()";
-			evaluation.evaluate(builder, null, result);
+			evaluator.evaluate(builder, null, result);
 		} catch (InterruptedException e) {
 			builder.timedOut(true).unknown().error(e);
 			log.warn("Check got interrupted");
@@ -338,7 +359,7 @@ public class DefaultCheck implements Check {
 		if (!initialized) {
 			this.config = config;
 			this.app = app;
-			this.id = id; // In the case of an app the id needs to be set first.
+			this.id = id;
 			this.fullName = app.getId() + ":" + id;
 			CheckMDC.put(this); //need fullname to be set
 			if (previousCheck != null && !id.equals(previousCheck.getId())) {
@@ -392,16 +413,26 @@ public class DefaultCheck implements Check {
 			if (recentCheckRuns.getSizeLimit() > recentCheckSizeLimit) {
 				setRecentCheckRunSize(recentCheckSizeLimit);
 			}
-			if (previousCheck != null) {
-				//order must be preserved
-				for (CheckRun checkRun : previousCheck.getRecentCheckRuns()) {
-					recentCheckRuns.addCheckRun(checkRun);
+			try {
+				if (previousCheck != null) {
+					//order must be preserved
+					for (CheckRun checkRun : previousCheck.getRecentCheckRuns()) {
+						recentCheckRuns.addCheckRun(checkRun);
+					}
+					if (previousCheck instanceof Failable) {
+						setFailingSince(((Failable) previousCheck).getFailingSince());
+					}
+					if (previousCheck instanceof Restartable) {
+						setRestarting(((Restartable) previousCheck).isRestarting());
+					}
+					if (previousCheck instanceof Executable) {
+						executor.init(((Executable) previousCheck).getExecutor(), this, config);
+					}
+				} else {
+					executor.init(null, this, config);
 				}
-				setFailingSince(previousCheck.getFailingSince());
-				setRestarting(previousCheck.isRestarting());
-				executor.init(previousCheck.getExecutor(), this, config);
-			} else {
-				executor.init(null, this, config);
+			} catch (Exception e) {
+				log.error("Unable to successfully initialize executor for {} due to error", getFullName(), e);
 			}
 			if (previousCheck instanceof DefaultCheck) {
 				DefaultCheck defaultCheck = (DefaultCheck) previousCheck;
@@ -418,31 +449,22 @@ public class DefaultCheck implements Check {
 	}
 
 	@Override
-	public List<Check> runAfterSuccess() {
-		return Collections.emptyList();
-	}
-
-	@Override
-	public List<Check> runAfterFailure() {
-		return Collections.emptyList();
-	}
-
-	@Override
 	public void close() throws Exception {
-		log.debug("Closing check {}", id);
+		log.debug("Closing {}", getFullName());
+		initialized = false;
 		recentCheckRuns = null;
-		executor.close();
+		getExecutor().close();
 	}
 
 	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof Check) { //implicit null check
 			Check that = (Check) obj;
-			if (id != null
-					&& app != null
+			if (getId() != null
+					&& getApp() != null
 					&& that.getApp() != null
-					&& id.equals(that.getId())
-					&& app.getId().equals(that.getApp().getId())) {
+					&& getId().equals(that.getId())
+					&& getApp().getId().equals(that.getApp().getId())) {
 				return true;
 			}
 		}
@@ -451,12 +473,12 @@ public class DefaultCheck implements Check {
 
 	@Override
 	public int hashCode() {
-		return app.getId().hashCode() * 31 + id.hashCode();
+		return getApp().getId().hashCode() * 31 + getId().hashCode();
 	}
 
 	/**
 	 * Checks can be compared to one another. Checks with a higher getPriority() are
-	 * first and when tied, checks with a higher getTimeoutMs() break that tie.
+	 * first and when tied, checks with a lower getTimeoutMs() break that tie.
 	 *
 	 * @param check The check to compare this check to
 	 * @return
@@ -464,10 +486,10 @@ public class DefaultCheck implements Check {
 	@Override
 	public int compareTo(Check check) {
 		// Sort by priority
-		int compare = -Integer.compare(getPriority(), check.getPriority());
+		int compare = -Integer.compare(getPriority(), check instanceof Prioritizable ? ((Prioritizable)check).getPriority() : getPriority());
 		if (compare == 0) {
 			// Then by timeout so that longest timeouts get submitted first
-			compare = -Long.compare(getTimeoutMs(), check.getTimeoutMs());
+			compare = -Long.compare(getTimeoutMs(), check instanceof Interruptable ? ((Interruptable)check).getTimeoutMs() : getTimeoutMs());
 		}
 		return compare;
 	}

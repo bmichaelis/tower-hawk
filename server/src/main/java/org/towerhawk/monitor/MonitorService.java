@@ -1,19 +1,21 @@
 package org.towerhawk.monitor;
 
+import com.coreoz.wisp.Scheduler;
+import com.coreoz.wisp.schedule.Schedule;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.towerhawk.config.Config;
-import org.towerhawk.monitor.active.Enabled;
 import org.towerhawk.monitor.app.App;
 import org.towerhawk.monitor.app.DefaultApp;
 import org.towerhawk.monitor.check.Check;
-import org.towerhawk.monitor.check.DefaultCheck;
-import org.towerhawk.monitor.check.run.CheckRunner;
+import org.towerhawk.monitor.check.logging.CheckMDC;
 import org.towerhawk.monitor.check.run.concurrent.AsynchronousCheckRunner;
 import org.towerhawk.monitor.check.run.context.DefaultRunContext;
 import org.towerhawk.monitor.check.run.context.RunContext;
+import org.towerhawk.monitor.descriptors.Schedulable;
 import org.towerhawk.monitor.reader.CheckDTO;
 import org.towerhawk.monitor.reader.CheckRefresher;
+import org.towerhawk.monitor.schedule.ScheduleCollector;
 import org.towerhawk.serde.resolver.TowerhawkIgnore;
 import org.towerhawk.spring.config.Configuration;
 
@@ -26,16 +28,19 @@ import java.time.ZonedDateTime;
 import java.util.*;
 
 @Slf4j
-@TowerhawkIgnore(ignore = MonitorService.class)
+@TowerhawkIgnore(MonitorService.class)
 @Named
 public class MonitorService extends DefaultApp {
 
-	private final CheckRunner checkCheckRunner;
+	@Getter(AccessLevel.PRIVATE)
+	private final AsynchronousCheckRunner checkCheckRunner;
 	private final RunContext runContext = new DefaultRunContext();
 	@Getter
 	private ZonedDateTime lastRefresh = ZonedDateTime.ofInstant(Instant.EPOCH, ZoneId.systemDefault());
 	private Configuration configuration;
 	private CheckRefresher refresher;
+	private Scheduler scheduler = new Scheduler();
+	@Getter
 	private Map<String, App> apps = new LinkedHashMap<>();
 
 	@Inject
@@ -94,9 +99,10 @@ public class MonitorService extends DefaultApp {
 			if (configuration.isRunChecksOnRefresh()) {
 				containingCheck.run(runContext);
 			}
+			resetSchedules();
 			lastRefresh = ZonedDateTime.now();
 		} catch (RuntimeException e) {
-			log.error("Failed to load new checks", e);
+			log.error("Failed to load new checks from {}", refresher.getDefinitionsDir(), e);
 			return false;
 		}
 		return true;
@@ -127,6 +133,39 @@ public class MonitorService extends DefaultApp {
 				log.error("Unable to initialize app {}", getId());
 			}
 		});
+	}
+
+	private void resetSchedules() {
+		Scheduler newScheduler = new Scheduler();
+		getApps().values().forEach(app -> {
+			app.getChecks().values()
+					.forEach(check -> { //do foreach here to have access to the checks
+						CheckMDC.put(check);
+						ScheduleCollector collector = ((Schedulable) check).getScheduleCollector();
+						if (collector != null) {
+							Map<String, Schedule> schedules = collector.getSchedules();
+							if (schedules != null) {
+								schedules.forEach((k, v) -> {
+											log.info("Scheduling for {}", v.toString());
+											List<Check> checkList = Collections.singletonList(check);
+											newScheduler.schedule(check.getFullName() + ":" + k,
+													() -> {
+														CheckMDC.put(check);
+														log.debug("Running from schedule");
+														getCheckCheckRunner().runChecksAsync(checkList, new DefaultRunContext().putContext("scheduled", true));
+														CheckMDC.remove();
+													},
+													v);
+										}
+								);
+							}
+						}
+						CheckMDC.remove();
+					});
+		});
+		log.info("Shutting down old Scheduler after refresh");
+		scheduler.gracefullyShutdown();
+		scheduler = newScheduler;
 	}
 
 }

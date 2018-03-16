@@ -3,6 +3,7 @@ package org.towerhawk.monitor.app;
 import org.pf4j.ExtensionPoint;
 import org.towerhawk.config.Config;
 import org.towerhawk.monitor.check.Check;
+import org.towerhawk.monitor.descriptors.Filterable;
 import org.towerhawk.monitor.check.run.CheckRun;
 import org.towerhawk.monitor.check.run.CheckRunner;
 import org.towerhawk.monitor.check.run.context.RunContext;
@@ -11,7 +12,7 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
 
-public interface App extends ExtensionPoint, AutoCloseable {
+public interface App extends ExtensionPoint, AutoCloseable, Filterable {
 
 	String getId();
 
@@ -44,6 +45,8 @@ public interface App extends ExtensionPoint, AutoCloseable {
 	default CheckRun run(RunContext runContext) {
 		return getContainingCheck().run(runContext);
 	}
+
+	CheckRun runCheck(String checkId, RunContext runContext);
 
 	Check getContainingCheck();
 

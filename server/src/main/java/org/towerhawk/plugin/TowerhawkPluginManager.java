@@ -23,5 +23,6 @@ public class TowerhawkPluginManager {
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> pluginManager.stopPlugins()));
 		pluginManager.loadPlugins();
 		pluginManager.startPlugins();
+		PluginContext.setPluginManager(pluginManager);
 	}
 }

@@ -1,13 +1,15 @@
 package org.towerhawk.monitor.app;
 
-import org.towerhawk.monitor.check.evaluation.Evaluation;
+import org.pf4j.Extension;
+import org.towerhawk.monitor.check.evaluation.Evaluator;
 import org.towerhawk.monitor.check.execution.ExecutionResult;
 import org.towerhawk.monitor.check.run.CheckRun;
 import org.towerhawk.monitor.check.run.CheckRunAggregator;
 
 import java.util.List;
 
-public class AppEvaluator implements Evaluation {
+@Extension
+public class AppEvaluator implements Evaluator {
 
 	protected String delimiter = ",";
 	protected CheckRunAggregator aggregator;

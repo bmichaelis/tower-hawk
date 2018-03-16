@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.towerhawk.config.Config;
 import org.towerhawk.monitor.active.Active;
 import org.towerhawk.monitor.active.Enabled;
+import org.towerhawk.monitor.descriptors.Activatable;
 import org.towerhawk.monitor.check.Check;
 import org.towerhawk.monitor.check.DefaultCheck;
 import org.towerhawk.monitor.check.run.CheckRun;
@@ -15,16 +16,13 @@ import org.towerhawk.monitor.check.run.ordered.SynchronousCheckRunner;
 import org.towerhawk.serde.resolver.TowerhawkType;
 
 import java.time.Duration;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Slf4j
 @Getter
 @Setter
 @TowerhawkType("default")
-public class DefaultApp implements App {
+public class DefaultApp implements App, Activatable {
 
 	protected DefaultCheck containingCheck;
 	protected Map<String, Check> checks = new LinkedHashMap<>();
@@ -38,6 +36,10 @@ public class DefaultApp implements App {
 	protected Active active = new Enabled();
 	protected Long timeoutMs;
 	protected Byte priority;
+	protected String fullName;
+	protected String alias;
+	protected String type;
+	protected Set<String> tags;
 
 	public DefaultApp() {
 		this(null);
@@ -66,6 +68,12 @@ public class DefaultApp implements App {
 	}
 
 	@Override
+	public CheckRun runCheck(String checkId, RunContext runContext) {
+		List<CheckRun> checkRuns = checkRunner.runChecks(Collections.singletonList(checks.get(checkId)), runContext);
+		return checkRuns.get(0);
+	}
+
+	@Override
 	public void init(App previousApp, Config config, String id) throws Exception {
 		this.id = id;
 		this.config = config;
@@ -73,38 +81,17 @@ public class DefaultApp implements App {
 			throw new IllegalStateException("App " + getId() + " must have at least one check");
 		}
 
-		getChecks().forEach((checkId, c) -> {
-			try {
-				c.init(previousApp == null ? null : previousApp.getCheck(checkId), config, this, checkId);
-			} catch (Exception e) {
-				log.error("Unable to initialize checks!", e);
-			}
-		});
-		checks = Collections.unmodifiableMap(getChecks());
-
 		if (defaultCacheMs == null) {
-			defaultCacheMs = config.getLong("defaultCacheMs");
-			if (defaultCacheMs == null) {
-				defaultCacheMs = 0L;
-			}
+			defaultCacheMs = config.getLong("defaultCacheMs", 0L);
 		}
 		if (defaultTimeoutMs == null) {
-			defaultTimeoutMs = config.getLong("defaultTimeoutMs");
-			if (defaultTimeoutMs == null) {
-				defaultTimeoutMs = 10000L;
-			}
+			defaultTimeoutMs = config.getLong("defaultTimeoutMs", 10000L);
 		}
 		if (defaultPriority == null) {
-			defaultPriority = config.getByte("defaultPriority");
-			if (defaultPriority == null) {
-				defaultPriority = 0;
-			}
+			defaultPriority = config.getByte("defaultPriority", (byte) 0);
 		}
 		if (defaultAllowedFailureDuration == null) {
-			defaultAllowedFailureDuration = Duration.ofMillis(config.getLong("defaultAllowedFailureDurationMs"));
-			if (defaultAllowedFailureDuration == null) {
-				defaultAllowedFailureDuration = Duration.ZERO;
-			}
+			defaultAllowedFailureDuration = Duration.ofMillis(config.getLong("defaultAllowedFailureDurationMs", 0L));
 		}
 
 		Check previousCheck = null;
@@ -113,19 +100,24 @@ public class DefaultApp implements App {
 		}
 		DefaultCheck containingCheck = new DefaultCheck();
 		containingCheck.setActive(active);
-		containingCheck.setEvaluation(new AppEvaluator());
-		containingCheck.setExecutor(new AppExecutor(this, checkRunner == null ? new SynchronousCheckRunner() : checkRunner,predicateKey()));
+		containingCheck.setEvaluator(new AppEvaluator());
+		containingCheck.setExecutor(new AppExecutor(this, checkRunner == null ? new SynchronousCheckRunner() : checkRunner, predicateKey()));
 		containingCheck.setTimeoutMs(timeoutMs == null ? 30000 : timeoutMs);
 		containingCheck.setPriority(priority == null ? 0 : priority);
 		containingCheck.setCacheMs(0L);
 		containingCheck.setUnknownIsCritical(true);
 		containingCheck.init(previousCheck, config, this, "defaultApp");
 		this.containingCheck = containingCheck;
-	}
 
-	@Override
-	public CheckRun run(RunContext runContext) {
-		return containingCheck.run(runContext);
+		//Must go at the end of app initialization
+		getChecks().forEach((checkId, c) -> {
+			try {
+				c.init(previousApp == null ? null : previousApp.getCheck(checkId), config, this, checkId);
+			} catch (Exception e) {
+				log.error("Check {} in app {} errored during initalization", checkId, getId(), e);
+			}
+		});
+		checks = Collections.unmodifiableMap(getChecks());
 	}
 
 	@Override

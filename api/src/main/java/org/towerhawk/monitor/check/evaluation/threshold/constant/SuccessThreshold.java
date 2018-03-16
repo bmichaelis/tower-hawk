@@ -4,7 +4,7 @@ import org.towerhawk.monitor.check.run.CheckRun;
 import org.towerhawk.monitor.check.evaluation.threshold.Threshold;
 import org.towerhawk.serde.resolver.TowerhawkType;
 
-@TowerhawkType({"success","default"})
+@TowerhawkType("success")
 public class SuccessThreshold implements Threshold {
 
 	@Override

@@ -1,8 +1,8 @@
 package org.towerhawk.monitor.check.evaluation.transform;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import org.towerhawk.serde.resolver.TowerhawkType;
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NONE)
+@TowerhawkType("string")
 public class StringTransform implements Transform<String> {
 
 	@Override

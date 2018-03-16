@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import org.towerhawk.monitor.app.App;
 import org.towerhawk.monitor.check.Check;
+import org.towerhawk.monitor.descriptors.Restartable;
 import org.towerhawk.monitor.check.filter.CheckFilter;
 import org.towerhawk.spring.config.Configuration;
 
@@ -44,9 +45,19 @@ public class RestartController {
 		CheckFilter checkFilter = new CheckFilter(priority, priorityLte, priorityGte, tags, notTags, type, notType, id, notId);
 		List<Check> checks = monitorServiceWrapper.getMonitorService().getChecks().values().stream().filter(checkFilter::filter).collect(Collectors.toList());
 		if (monitorServiceWrapper.shouldRun(request)) {
-			checks.forEach(c -> c.setRestarting(restarting));
+			checks.forEach(c -> {
+				if (c instanceof Restartable) {
+					((Restartable)c).setRestarting(restarting);
+				}
+			});
 		}
-		return checks.stream().collect(Collectors.toMap(Check::getId, Check::isRestarting));
+		return checks.stream().collect(Collectors.toMap(Check::getId, v -> {
+			if (v instanceof Restartable) {
+				return ((Restartable) v).isRestarting();
+			} else {
+				return false;
+			}
+		}));
 	}
 
 	@RequestMapping(path = "/app/{appId}/restart", method = {RequestMethod.POST, RequestMethod.GET})
@@ -56,10 +67,19 @@ public class RestartController {
 			HttpServletRequest request
 	) {
 		App app = monitorServiceWrapper.getApp(appId);
-		if (monitorServiceWrapper.shouldRun(request)) {
-			app.getContainingCheck().setRestarting(restarting);
+		boolean shouldRun = monitorServiceWrapper.shouldRun(request);
+		if (app.getContainingCheck() instanceof Restartable) {
+			Restartable r = (Restartable) app.getContainingCheck();
+			if (shouldRun) {
+				r.setRestarting(restarting);
+			}
+			return r.isRestarting();
+		} else if (!shouldRun){
+				return false;
+		} else {
+			//Trying to set restart on a non-restartable App
+			throw new IllegalStateException("App " + appId + " is not restartable");
 		}
-		return app.getContainingCheck().isRestarting();
 	}
 
 	@RequestMapping(path = "/app/{appId}/{checkId}/restart", method = {RequestMethod.POST, RequestMethod.GET})
@@ -70,10 +90,18 @@ public class RestartController {
 			HttpServletRequest request
 	) {
 		Check check = monitorServiceWrapper.getCheck(appId, checkId);
-		if (monitorServiceWrapper.shouldRun(request)) {
-			check.setRestarting(restarting);
+		boolean shouldRun = monitorServiceWrapper.shouldRun(request);
+		if (check instanceof Restartable) {
+			Restartable r = (Restartable) check;
+			if (shouldRun) {
+				r.setRestarting(restarting);
+			}
+			return r.isRestarting();
+		} else if (!shouldRun) {
+			return false;
+		} else {
+			throw new IllegalStateException("Check " + checkId + " is not restartable");
 		}
-		return check.isRestarting();
 	}
 
 	@RequestMapping(path = "/restart", method = {RequestMethod.POST, RequestMethod.GET})
@@ -104,11 +132,11 @@ public class RestartController {
 		List<Check> apps = monitorServiceWrapper.getMonitorService().getChecks().values().stream().filter(appFilter::filter).collect(Collectors.toList());
 		Map<String, Map<String, Boolean>> returnMap = new HashMap<>();
 		for (Check app : apps) {
-			List<Check> checks = ((App) app).getChecks().values().stream().filter(checkFilter::filter).collect(Collectors.toList());
+			List<Check> checks = ((App) app).getChecks().values().stream().filter(c -> c instanceof Restartable && checkFilter.filter(c)).collect(Collectors.toList());
 			if (monitorServiceWrapper.shouldRun(request)) {
-				checks.forEach(c -> c.setRestarting(restarting));
+				checks.forEach(c -> ((Restartable)c).setRestarting(restarting));
 			}
-			Map<String, Boolean> checksRestarting = checks.stream().collect(Collectors.toMap(Check::getId, Check::isRestarting));
+			Map<String, Boolean> checksRestarting = checks.stream().collect(Collectors.toMap(Check::getId, v -> v instanceof Restartable && ((Restartable)v).isRestarting()));
 			if (!checksRestarting.isEmpty()) {
 				returnMap.put(app.getId(), checksRestarting);
 			}

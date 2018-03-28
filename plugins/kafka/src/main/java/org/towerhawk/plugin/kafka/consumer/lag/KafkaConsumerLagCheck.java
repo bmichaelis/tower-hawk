@@ -2,6 +2,7 @@ package org.towerhawk.plugin.kafka.consumer.lag;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.towerhawk.config.Config;
 import org.towerhawk.monitor.check.Check;
 import org.towerhawk.monitor.check.execution.CheckExecutor;
@@ -12,6 +13,7 @@ import org.towerhawk.plugin.PluginContext;
 import org.towerhawk.plugin.kafka.consumer.lag.ConsumerLagAdapter;
 import org.towerhawk.serde.resolver.TowerhawkType;
 
+@Slf4j
 @Getter
 @Setter
 @TowerhawkType("kafkaConsumerLag")
@@ -32,6 +34,7 @@ public class KafkaConsumerLagCheck implements CheckExecutor {
 
 	@Override
 	public ExecutionResult execute(CheckRun.Builder builder, RunContext context) throws Exception {
+		log.debug(adapter.getLags().toString());
 		return adapter.getLags();
 	}
 

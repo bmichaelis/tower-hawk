@@ -45,7 +45,7 @@ class ConsumerLagAdapter(brokers: String, groupId: String) extends AutoCloseable
       case None =>
         // applies to both old and new consumer
         throw new IllegalStateException(s"Consumer group '$groupId' does not exist.")
-      _ =>
+      case _ =>
         state match {
           case Some("Dead") =>
             throw new IllegalStateException(s"Consumer group '$groupId' does not exist")

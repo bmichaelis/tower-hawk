@@ -15,6 +15,7 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.towerhawk.monitor.check.evaluation.transform.IdentityTransform;
 import org.towerhawk.monitor.check.evaluation.transform.Transform;
 import org.towerhawk.monitor.descriptors.Keyable;
 import org.towerhawk.monitor.descriptors.Partitionable;
@@ -22,6 +23,7 @@ import org.towerhawk.monitor.descriptors.Routable;
 import org.towerhawk.monitor.descriptors.Timestampable;
 import org.towerhawk.serde.resolver.TowerhawkType;
 
+import java.util.Iterator;
 import java.util.Map;
 
 @Getter
@@ -39,14 +41,15 @@ public class KafkaProducerTransform implements Transform {
 	private boolean deepUnwrap;
 	private boolean unwrap;
 	private transient int partitionCount;
-
+	private Transform preProduceTransform;
 
 	@JsonCreator
 	public KafkaProducerTransform(
 			@JsonProperty("props") Map<String, Object> props,
 			@JsonProperty("topic") @NonNull String topic,
 			@JsonProperty("unwrap") Boolean unwrap,
-			@JsonProperty("deepUnwrap") Boolean deepUnwrap
+			@JsonProperty("deepUnwrap") Boolean deepUnwrap,
+			@JsonProperty("preProduceTransform") Transform preProduceTransform
 	) {
 		this.topic = topic;
 		this.unwrap = unwrap == null ? true : unwrap;
@@ -59,14 +62,24 @@ public class KafkaProducerTransform implements Transform {
 
 		this.producer = new KafkaProducer<>(props);
 		partitionCount = producer.partitionsFor(topic).size();
+
+		if(preProduceTransform == null){
+			preProduceTransform = new IdentityTransform();
+		}
+		this.preProduceTransform = preProduceTransform;
 	}
 
 	@Override
-	public Object transform(Object value) {
+	public Object transform(Object value) throws Exception {
 		if (unwrap && value instanceof Map) {
-			((Map<?, ?>) value).forEach((k, v) -> send(v));
+			for(Object entry : ((Map) value).values()) {
+				send(entry);
+			}
 		} else if (unwrap && value instanceof Iterable) {
-			((Iterable<?>) value).forEach(this::send);
+			Iterator i = ((Iterable) value).iterator();
+			while (i.hasNext()) {
+				send(i.next());
+			}
 		} else {
 			send(value);
 		}
@@ -74,16 +87,22 @@ public class KafkaProducerTransform implements Transform {
 		return value;
 	}
 
-	private void send(Object value) {
+	private void send(Object value) throws Exception {
 		if (deepUnwrap && value instanceof Map) {
-			((Map<?, ?>) value).forEach((k, v) -> transform(v));
+			for(Object entry : ((Map) value).values()) {
+				send(entry);
+			}
 			return;
 		} else if (deepUnwrap && value instanceof Iterable) {
-			((Iterable<?>) value).forEach(this::transform);
+			Iterator i = ((Iterable) value).iterator();
+			while (i.hasNext()) {
+				send(i.next());
+			}
 			return;
 		}
 
 		try {
+			value = preProduceTransform.transform(value);
 			String key = "";
 			Integer partition = null;
 			long timestamp;
@@ -104,11 +123,12 @@ public class KafkaProducerTransform implements Transform {
 			}
 			topic = topic == null ? this.topic : topic;
 
-			String val = mapper.writeValueAsString(value);
+			String val = value instanceof String ? (String)value : mapper.writeValueAsString(value);
 			ProducerRecord<String, String> producerRecord = new ProducerRecord<>(topic, partition, timestamp, key, val);
 			producer.send(producerRecord);
-		} catch (JsonProcessingException e) {
+		} catch (Exception e) {
 			log.error("Unable to process record {}", value.toString(), e);
+			throw e;
 		}
 	}
 }

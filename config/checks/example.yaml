@@ -1,21 +1,22 @@
 apps:
-  zookeeper:
-    cacheMs: 10000
-    defaultCacheMs: 10000
-    timeoutMs: 1000
-    defaultTimeoutMs: 1000
-    priority: 10
-    checks:
-      telnet:
-        executor:
-          type: portcheck
-          port: 2181
-          send: mntr
-        evaluator:
-          type: regex
-          .*:
-            transform:
-              type: logger
+#  zookeeper:
+#    cacheMs: 10000
+#    defaultCacheMs: 10000
+#    timeoutMs: 1000
+#    defaultTimeoutMs: 1000
+#    priority: 10
+#    checks:
+#      telnet:
+#        cacheMs: 2000
+#        executor:
+#          type: portcheck
+#          port: 2181
+#          send: mntr
+#        evaluator:
+#          type: regex
+#          .*:
+#            transform:
+#              type: logger
   kafka:
     cacheMs: 10000
     defaultCacheMs: 1000
@@ -43,6 +44,23 @@ apps:
             transform:
               type: kafkaProducerTransform
               topic: test_kafka_telegraf
+              preProduceTransform:
+                type: influxFormatTransform
+                metricName: kafkaLag
+                fields:
+                  - lag
+                  - logEndOffset
+                  - offset
+                tags:
+                  - group
+                  - topic
+                  - partition
+                  - clientId
+                  - consumerId
+                  - host
+                  - coordinatorId
+                  - coordinatorHost
+
 
 #  druid:
 #    alias: apache-druid
@@ -193,15 +211,15 @@ apps:
 ##            warning: ~:0.9
 ##            critical: ~:1
 ##            setMessage: true
-##  test:
-##    timeoutMs: 2000
-##    checks:
-##      crit:
-##        type: critical
-##      warn:
-##        type: warning
-##      succeeded:
-##        type: succeeded
-##      timeout:
-##        type: timeout
-##        unknownIsCritical: false
+#  test:
+#    timeoutMs: 2000
+#    checks:
+#      crit:
+#        type: critical
+#      warn:
+#        type: warning
+#      succeeded:
+#        type: succeeded
+#      timeout:
+#        type: timeout
+#        unknownIsCritical: false

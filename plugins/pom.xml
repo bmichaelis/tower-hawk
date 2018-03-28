@@ -28,6 +28,7 @@
         <module>cron-schedule</module>
         <module>groovy</module>
         <module>http</module>
+        <module>influxdb</module>
         <module>jq</module>
         <module>kafka</module>
         <module>oshi</module>

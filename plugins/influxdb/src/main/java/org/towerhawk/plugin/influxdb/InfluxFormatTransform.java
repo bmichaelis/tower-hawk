@@ -1,24 +1,17 @@
 package org.towerhawk.plugin.influxdb;
 
 import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.pf4j.Extension;
 import org.towerhawk.monitor.check.evaluation.transform.Transform;
-import org.towerhawk.monitor.descriptors.Initializable;
 import org.towerhawk.serde.resolver.TowerhawkType;
 
 import javax.annotation.PostConstruct;
-import java.math.BigDecimal;
-import java.time.ZonedDateTime;
-import java.time.temporal.Temporal;
-import java.time.temporal.TemporalAccessor;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Setter
 @Slf4j
 @Extension
-@TowerhawkType("influxFormatTransform")
+@TowerhawkType("influxFormat")
 public class InfluxFormatTransform implements Transform<Object> {
 
 	private static final String SEPARATOR = ",";
